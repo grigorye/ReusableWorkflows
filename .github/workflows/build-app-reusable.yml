@@ -196,9 +196,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: XcodeGen
+      - name: Generate Project
         run: |
-          mint run xcodegen -s XcodeGen/Variant/${{ inputs.projectKind }}.yml -r . -p Xcodeproj
+          ./Commands/GenerateProject "${{ inputs.projectKind }}"
 
       - name: Build .xcarchive
         run: |
