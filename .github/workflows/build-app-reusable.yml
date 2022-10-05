@@ -63,7 +63,7 @@ on:
 
 defaults:
   run:
-    shell: bash {0}
+    shell: /bin/bash --noprofile -x -euo pipefail {0}
 
 jobs:
   build-app:
@@ -205,6 +205,7 @@ jobs:
           ./Commands/GenerateProject "${{ inputs.projectKind }}"
 
       - name: Build .xcarchive
+        shell: bash --noprofile --norc -x -euo pipefail {0}
         run: |
           # build
           . ./Commands/Xcodebuild-env.sh
@@ -268,7 +269,7 @@ jobs:
 
       - name: Pull .dmg
         if: ${{ env.ACT && inputs.buildConfigName == 'DeveloperID' }}
-        shell: bash --noprofile --norc -x -euo pipefail {0}
+        shell: /bin/bash --noprofile --norc -x -euo pipefail {0}
         run: |
           scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$DMG_PATH" "$DMG_PATH"
           
