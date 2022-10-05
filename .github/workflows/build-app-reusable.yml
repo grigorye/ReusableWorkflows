@@ -60,6 +60,8 @@ on:
         required: true
       EXPORT_CERTIFICATE_DEVELOPER_ID_BASE64:
         required: true
+      EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64:
+        required: false
 
 defaults:
   run:
@@ -191,7 +193,7 @@ jobs:
       - name: Erase profiles remaining from previous builds
         run: |
           rm -rf ~/Library/MobileDevice/Provisioning\ Profiles
-      
+
       - uses: actions/cache@v2
         if: ${{ false }}
         with:
@@ -240,6 +242,23 @@ jobs:
           path: |
             ${{ env.ARCHIVE_PATH }}.tar
 
+      - name: Install custom provisioning profiles for export, if any
+        env:
+          EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64: ${{ secrets.EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          # create variables
+          PROVISIONING_PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
+          EXPORT_CUSTOM_PROVISIONING_PROFILE_PATH="$PROVISIONING_PROFILES_DIR/$PRODUCT_NAME-export-custom.provisionprofile"
+
+          if [ "${EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64:-}" != "" ]; then
+            # Erase profiles automatically generated as part of building .xcarchive.
+            rm -r "$PROVISIONING_PROFILES_DIR"
+            mkdir -p "$(dirname "$EXPORT_CUSTOM_PROVISIONING_PROFILE_PATH")"
+
+            # import provisioning profile from secrets
+            echo -n "$EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64" | base64 --decode --output "$EXPORT_CUSTOM_PROVISIONING_PROFILE_PATH"
+          fi
+
       - name: Export archive
         run: |
           # create variables
@@ -272,7 +291,7 @@ jobs:
         shell: /bin/bash --noprofile --norc -x -euo pipefail {0}
         run: |
           scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$DMG_PATH" "$DMG_PATH"
-          
+
       - name: Save .dmg
         if: ${{ inputs.buildConfigName == 'DeveloperID' }}
         uses: actions/upload-artifact@v2
