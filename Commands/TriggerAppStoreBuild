@@ -1,0 +1,13 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+pr="$(gh pr view --json number --jq .number)"
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+trunk="master"
+
+bundleVersion=$(./GHAScripts/BundleVersionInPRBranch "$trunk" "$pr")
+
+gh workflow run build-app.yml --ref "$branch" --field build-config=app-store --field bundle-version="$bundleVersion"

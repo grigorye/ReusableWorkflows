@@ -1,0 +1,17 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+wd="$(dirname "$0")"
+
+trunk="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+
+[ "$trunk" == "master" ] || [ "$trunk" == "main" ] || exit 1
+
+
+pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
+
+[ z"${ACT:-}" == z"true" ] || git fetch --no-tags origin "$trunk":"$trunk"
+
+"$wd"/BundleVersionInPRBranch "$trunk" "$pr"
