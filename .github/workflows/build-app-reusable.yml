@@ -26,7 +26,7 @@ on:
         type: string
       packageExtension:
         required: false
-        default: '.pkg'
+        default: '.pkg' # '.ipa' or '.pkg'
         type: string
       buildConfigName:
         required: false
