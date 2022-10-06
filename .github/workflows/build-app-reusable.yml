@@ -43,6 +43,9 @@ on:
         required: false
         default: 'dist/developer-id-exportOptions.plist' # 'dist/app-store-exportOptions.plist' or 'dist/developer-id-exportOptions.plist'
         type: string
+      bundleVersion:
+        required: false
+        type: string
     secrets:
       APP_STORE_AUTHENTICATION_KEY_BASE64:
         required: true
@@ -143,7 +146,11 @@ jobs:
       - name: Setup Version Dependent Environment
         run: |
           # Create variables
-          BUNDLE_VERSION=$(GHAScripts/BundleVersion)
+          if [ "${{ inputs.bundleVersion }}" != "" ]; then
+            BUNDLE_VERSION="${{ inputs.bundleVersion }}"
+          else
+            BUNDLE_VERSION="${BUNDLE_VERSION:-$(GHAScripts/BundleVersion)}"
+          fi
 
           echo "BUNDLE_VERSION=$BUNDLE_VERSION" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$PRODUCT_NAME" >> $GITHUB_ENV
