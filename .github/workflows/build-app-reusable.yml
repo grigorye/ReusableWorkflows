@@ -22,7 +22,7 @@ on:
         type: string
       uploadType:
         required: false
-        default: 'macos'
+        default: 'macos' # 'ios' or 'macos'
         type: string
       packageExtension:
         required: false
