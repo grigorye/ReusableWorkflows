@@ -233,7 +233,7 @@ jobs:
             -authenticationKeyIssuerID "$APP_STORE_AUTHENTICATION_KEY_ISSUER_ID" \
             BUNDLE_VERSION="$BUNDLE_VERSION" \
             | xcpretty
-          ./GHAShortcuts/gh-tar "$(dirname "$ARCHIVE_PATH")" "$ARCHIVE_PATH"
+          ./GHAScripts/gh-tar "$(dirname "$ARCHIVE_PATH")" "$ARCHIVE_PATH"
 
       - name: Pull .xcarchive
         if: ${{ env.ACT }}
