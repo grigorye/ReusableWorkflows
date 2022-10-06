@@ -30,7 +30,7 @@ on:
         type: string
       buildConfigName:
         required: false
-        default: 'DeveloperID' # 'AppStore' or 'DeveloperID'
+        default: 'DeveloperID' # 'AppStore' or 'DeveloperID' or 'iOS'
         type: string
       projectKind:
         required: false
@@ -309,7 +309,7 @@ jobs:
             ${{ env.DMG_PATH }}
 
       - name: Upload to TestFlight
-        if: ${{ !env.ACT && inputs.buildConfigName == 'AppStore' }}
+        if: ${{ !env.ACT && (inputs.buildConfigName == 'AppStore' || inputs.buildConfigName == 'iOS') }}
         run: |
           # create variables
           API_KEY_NAME="$APP_STORE_AUTHENTICATION_KEY_ID"
