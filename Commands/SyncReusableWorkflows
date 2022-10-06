@@ -1,0 +1,12 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+repoName="ReusableWorkflows"
+submodule="ReusableWorkflows"
+workflow=".github/workflows/build-app.yml"
+
+submoduleSha=$(git -C "$submodule" rev-parse HEAD)
+
+sed -i '' -e "s|\(uses: .*/$repoName/\.github/workflows/.*\.yml@\).*|\1$submoduleSha|" "$workflow"
