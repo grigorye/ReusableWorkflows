@@ -36,9 +36,6 @@ on:
         required: false
         default: 'DeveloperID' # 'AppStore' or 'DeveloperID'
         type: string
-      xcodebuildProjectOrWorkspace:
-        required: true
-        type: string
       exportOptionsPlist:
         required: false
         default: 'dist/developer-id-exportOptions.plist' # 'dist/app-store-exportOptions.plist' or 'dist/developer-id-exportOptions.plist'
@@ -214,13 +211,20 @@ jobs:
         run: |
           ./Commands/GenerateProject "${{ inputs.projectKind }}"
 
+      - name: Resolve xcodeproj or workspace
+        id: resolve-project-or-workspace-flag
+        run: |
+          projectKind=${{ inputs.projectKind }}
+          projectOrWorkspaceFlag="$(GHAScripts/ResolveProjectOrWorkspaceFlag "$projectKind")"
+          echo "::set-output name=project-or-workspace-flag::$projectOrWorkspaceFlag"
+
       - name: Build .xcarchive
         shell: bash --noprofile --norc -x -euo pipefail {0}
         run: |
           # build
           . ./Commands/Xcodebuild-env.sh
           xcodebuild archive \
-            ${{ inputs.xcodebuildProjectOrWorkspace }} \
+            ${{ steps.resolve-project-or-workspace-flag.outputs.project-or-workspace-flag }} \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -disableAutomaticPackageResolution \
             -onlyUsePackageVersionsFromResolvedFile \
