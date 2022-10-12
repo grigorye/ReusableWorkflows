@@ -1,0 +1,25 @@
+on:
+  workflow_call:
+    outputs:
+      number:
+        description: 'The number'
+        value: ${{ jobs.generate.outputs.number }}
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile -x -euo pipefail {0}
+
+jobs:
+  generate:
+    name: 'Generate'
+    runs-on: ubuntu-22.04
+    outputs:
+      number: ${{ steps.number.outputs.number }}
+    steps:
+      - name: Generate the number
+        id: number
+        run: |
+          epoch=$(date -d "2022-10-08T21:01:30Z" +%s)
+          now=$(date +%s)
+          monotonicallyIncreasingNumber=$((now-epoch))
+          echo "::set-output name=number::$monotonicallyIncreasingNumber"

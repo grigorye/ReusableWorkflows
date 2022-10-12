@@ -3,16 +3,24 @@
 set -x
 set -euo pipefail
 
+increasingNumber="$1"
+shift
+
 wd="$(dirname "$0")"
 
 trunk="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
 
-[ "$trunk" == "master" ] || [ "$trunk" == "main" ] || exit 1
+prefetchTrunkIfNecessary() {
+    [ "$trunk" == "master" ] || [ "$trunk" == "main" ] || exit 1
 
-pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
+    # Prefetch trunk to be able to calculate the number of commits in the branch.
+    pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
 
-if [ "$pr" != "null" ]; then
-    [ z"${ACT:-}" == z"true" ] || git fetch --no-tags origin "$trunk":"$trunk"
-fi
+    if [ "$pr" != "null" ]; then
+        [ z"${ACT:-}" == z"true" ] || git fetch --no-tags origin "$trunk":"$trunk"
+    fi
+}
 
-"$wd"/BundleVersionInPRBranch "$trunk" "$pr"
+prefetchTrunkIfNecessary
+
+"$wd/BundleVersionFromGit" "$increasingNumber" "$trunk"
