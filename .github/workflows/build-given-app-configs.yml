@@ -31,17 +31,17 @@ jobs:
         id: resolve-macos-app-scheme
         run: |
           if [[ -n "${{ inputs.macos-app-scheme }}" ]]; then
-            echo "::set-output name=macos-app-scheme::${{ inputs.macos-app-scheme }}"
+            echo "macos-app-scheme=${{ inputs.macos-app-scheme }}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=macos-app-scheme::macOS-app"
+            echo "macos-app-scheme=macOS-app" >> $GITHUB_OUTPUT
           fi
       - name: Resolve iOS app scheme
         id: resolve-ios-app-scheme
         run: |
           if [[ -n "${{ inputs.ios-app-scheme }}" ]]; then
-            echo "::set-output name=ios-app-scheme::${{ inputs.ios-app-scheme }}"
+            echo "ios-app-scheme=${{ inputs.ios-app-scheme }}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=ios-app-scheme::iOS-app"
+            echo "ios-app-scheme=iOS-app" >> $GITHUB_OUTPUT
           fi
 
   resolve-build-configs:
@@ -57,13 +57,13 @@ jobs:
         run: |
           build_configs="${{ inputs.build-configs }}"
           if [ "${build_configs:-}" == "" ]; then
-            echo "::set-output name=build-app-store::true"
-            echo "::set-output name=build-developer-id::true"
-            echo "::set-output name=build-ios::true"
+            echo "build-app-store=true" >> $GITHUB_OUTPUT
+            echo "build-developer-id=true" >> $GITHUB_OUTPUT
+            echo "build-ios=true" >> $GITHUB_OUTPUT
           else 
-            echo "::set-output name=build-app-store::$(echo "$build_configs" | jq -r 'any(.[]; . == "app-store")')"
-            echo "::set-output name=build-developer-id::$(echo "$build_configs" | jq -r 'any(.[]; . == "developer-id")')"
-            echo "::set-output name=build-ios::$(echo "$build_configs" | jq -r 'any(.[]; . == "ios")')"
+            echo "build-app-store=$(echo "$build_configs" | jq -r 'any(.[]; . == "app-store")')" >> $GITHUB_OUTPUT
+            echo "build-developer-id=$(echo "$build_configs" | jq -r 'any(.[]; . == "developer-id")')" >> $GITHUB_OUTPUT
+            echo "build-ios=$(echo "$build_configs" | jq -r 'any(.[]; . == "ios")')" >> $GITHUB_OUTPUT
           fi
 
   build:
