@@ -198,7 +198,7 @@ jobs:
           scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$SNAPSHOTS_XCRESULT".tar "$SNAPSHOTS_XCRESULT".tar
 
       - name: Save .xcresult for Snapshots
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: snapshots-xcresult
           if-no-files-found: error
@@ -230,7 +230,7 @@ jobs:
           scp "$REMOTE_RUNNER_USER"@host.docker.internal:"$REGENERATED_SNAPSHOTS_ARCHIVE" "$REGENERATED_SNAPSHOTS_ARCHIVE"
 
       - name: Save Regenerated Snapshots
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: regenerated-snapshots
           if-no-files-found: error

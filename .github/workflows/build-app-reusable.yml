@@ -95,7 +95,7 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: true
@@ -129,7 +129,7 @@ jobs:
 
       - name: Cache Mint packages
         id: mint-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.mint
           key: ${{ runner.os }}-mint-${{ hashFiles('**/Mintfile') }}
@@ -247,7 +247,7 @@ jobs:
           scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$ARCHIVE_PATH".tar "$ARCHIVE_PATH".tar
 
       - name: Save .xcarchive
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: xcarchive-${{ inputs.buildConfigName }}
           if-no-files-found: error
@@ -306,7 +306,7 @@ jobs:
 
       - name: Save .dmg
         if: ${{ inputs.buildConfigName == 'DeveloperID' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: dmg
           if-no-files-found: error
