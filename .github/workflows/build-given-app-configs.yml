@@ -100,7 +100,7 @@ jobs:
             exportOptionsPlist: 'dist/appstore-exportOptions.plist'
             configNameDummy: ''
 
-    uses: grigorye/ReusableWorkflows/.github/workflows/build-app-reusable.yml@f163fa0fdcf4a6ffd29606b42f2222a64a0280d2
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-app-reusable.yml@e3a87cac31f5e6957c1dd19cca7923948d8d7d51
     with:
       if: ${{ matrix.build-config.if }}
       scheme: ${{ matrix.build-config.scheme }}
