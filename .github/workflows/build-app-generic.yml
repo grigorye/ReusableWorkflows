@@ -1,0 +1,28 @@
+on:
+  workflow_call:
+    inputs:
+      build-configs:
+        type: string
+        required: true
+      macos-app-scheme:
+        type: string
+        required: false
+      ios-app-scheme:
+        type: string
+        required: false
+
+jobs:
+  increasing-number:
+    name: 'Increasing number'
+    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@852bccc9d5b35be8350ed906132f48d51b212750
+
+  build:
+    name: 'Generic'
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-given-app-configs.yml@852bccc9d5b35be8350ed906132f48d51b212750
+    needs: increasing-number
+    with:
+      increasing-number: ${{ needs.increasing-number.outputs.number }}
+      build-configs: ${{ inputs.build-configs }}
+      macos-app-scheme: ${{ inputs.macos-app-scheme }}
+      ios-app-scheme: ${{ inputs.ios-app-scheme }}
+    secrets: inherit

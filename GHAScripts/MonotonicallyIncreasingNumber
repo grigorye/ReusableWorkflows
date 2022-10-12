@@ -1,0 +1,9 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+epoch=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "2022-10-08T21:01:30Z" +%s)
+now=$(date +%s)
+
+echo $((now-epoch))

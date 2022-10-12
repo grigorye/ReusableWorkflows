@@ -1,0 +1,12 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+repoName="ReusableWorkflows"
+
+lastSha=$(git rev-parse HEAD)
+
+for workflow in .github/workflows/*.yml; do
+    sed -i '' -e "s|\(uses: .*/$repoName/\.github/workflows/.*\.yml@\).*|\1$lastSha|" "$workflow"
+done

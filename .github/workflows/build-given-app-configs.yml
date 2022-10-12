@@ -1,0 +1,115 @@
+on:
+  workflow_call:
+    inputs:
+      increasing-number:
+        type: string
+        required: true
+      build-configs:
+        type: string
+        required: false
+        default: "['ios', 'app-store', 'developer-id']"
+      macos-app-scheme:
+        type: string
+        required: false
+      ios-app-scheme:
+        type: string
+        required: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -x -euo pipefail {0}
+
+jobs:
+  resolve-schemes:
+    name: 'Resolve schemes'
+    runs-on: ubuntu-22.04
+    outputs:
+      macos-app-scheme: ${{ steps.resolve-macos-app-scheme.outputs.macos-app-scheme }}
+      ios-app-scheme: ${{ steps.resolve-ios-app-scheme.outputs.ios-app-scheme }}
+    steps:
+      - name: Resolve macOS app scheme
+        id: resolve-macos-app-scheme
+        run: |
+          if [[ -n "${{ inputs.macos-app-scheme }}" ]]; then
+            echo "::set-output name=macos-app-scheme::${{ inputs.macos-app-scheme }}"
+          else
+            echo "::set-output name=macos-app-scheme::macOS-app"
+          fi
+      - name: Resolve iOS app scheme
+        id: resolve-ios-app-scheme
+        run: |
+          if [[ -n "${{ inputs.ios-app-scheme }}" ]]; then
+            echo "::set-output name=ios-app-scheme::${{ inputs.ios-app-scheme }}"
+          else
+            echo "::set-output name=ios-app-scheme::iOS-app"
+          fi
+
+  resolve-build-configs:
+    name: 'Resolve build configs'
+    runs-on: ubuntu-22.04
+    outputs:
+      build-app-store: ${{ steps.resolve-build-configs.outputs.build-app-store }}
+      build-developer-id: ${{ steps.resolve-build-configs.outputs.build-developer-id }}
+      build-ios: ${{ steps.resolve-build-configs.outputs.build-ios }}
+    steps:
+      - name: Resolve build configs
+        id: resolve-build-configs
+        run: |
+          build_configs="${{ inputs.build-configs }}"
+          if [ "${build_configs:-}" == "" ]; then
+            echo "::set-output name=build-app-store::true"
+            echo "::set-output name=build-developer-id::true"
+            echo "::set-output name=build-ios::true"
+          else 
+            echo "::set-output name=build-app-store::$(echo "$build_configs" | jq -r 'any(.[]; . == "app-store")')"
+            echo "::set-output name=build-developer-id::$(echo "$build_configs" | jq -r 'any(.[]; . == "developer-id")')"
+            echo "::set-output name=build-ios::$(echo "$build_configs" | jq -r 'any(.[]; . == "ios")')"
+          fi
+
+  build:
+    name: 'Build${{ matrix.build-config.configNameDummy }}'
+    needs: [resolve-schemes, resolve-build-configs]
+    strategy:
+      matrix:
+        build-config:
+          - name: 'AppStore'
+            if: ${{ needs.resolve-build-configs.outputs.build-app-store == 'true' }}
+            projectKind: 'AppStore'
+            destination: 'generic/platform=macOS'
+            scheme: ${{ needs.resolve-schemes.outputs.macos-app-scheme }}
+            uploadType: 'macos'
+            packageExtension: '.pkg'
+            exportOptionsPlist: 'dist/appstore-exportOptions.plist'
+            configNameDummy: ''
+          - name: 'DeveloperID'
+            if: ${{ needs.resolve-build-configs.outputs.build-developer-id == 'true' }}
+            projectKind: 'DeveloperID'
+            destination: 'generic/platform=macOS'
+            scheme: ${{ needs.resolve-schemes.outputs.macos-app-scheme }}
+            uploadType: 'macos'
+            packageExtension: '.pkg'
+            exportOptionsPlist: 'dist/developer-id-exportOptions.plist'
+            configNameDummy: ''
+          - name: 'iOS'
+            if: ${{ needs.resolve-build-configs.outputs.build-ios == 'true' }}
+            projectKind: 'AppStore'
+            destination: 'generic/platform=iOS'
+            scheme: ${{ needs.resolve-schemes.outputs.ios-app-scheme }}
+            uploadType: 'ios'
+            packageExtension: '.ipa'
+            exportOptionsPlist: 'dist/appstore-exportOptions.plist'
+            configNameDummy: ''
+
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-app-reusable.yml@852bccc9d5b35be8350ed906132f48d51b212750
+    with:
+      if: ${{ matrix.build-config.if }}
+      scheme: ${{ matrix.build-config.scheme }}
+      destination: ${{ matrix.build-config.destination }}
+      uploadType: ${{ matrix.build-config.uploadType }}
+      packageExtension: ${{ matrix.build-config.packageExtension }}
+      buildConfigName: ${{ matrix.build-config.name }}
+      projectKind: ${{ matrix.build-config.projectKind }}
+      exportOptionsPlist: ${{ matrix.build-config.exportOptionsPlist }}
+      increasingNumber: ${{ inputs.increasing-number }}
+      jobName: ${{ matrix.build-config.name }}
+    secrets: inherit
