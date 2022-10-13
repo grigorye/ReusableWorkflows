@@ -6,8 +6,9 @@ set -euo pipefail
 repoName="ReusableWorkflows"
 submodule="ReusableWorkflows"
 
-submoduleSha=$(git -C "$submodule" rev-parse HEAD)
+submoduleTag="$(git -C "$submodule" tag --points-at HEAD)"
+submoduleShaOrTag="${submoduleTag:-$(git -C "$submodule" rev-parse HEAD)}"
 
 for workflow in .github/workflows/*.yml; do
-    sed -i '' -e "s|\(uses: .*/$repoName/\.github/workflows/.*\.yml@\).*|\1$submoduleSha|" "$workflow"
+    sed -i '' -e "s|\(uses: .*/$repoName/\.github/workflows/.*\.yml@\).*|\1$submoduleShaOrTag|" "$workflow"
 done
