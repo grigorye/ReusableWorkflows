@@ -216,7 +216,7 @@ jobs:
         run: |
           projectKind=${{ inputs.projectKind }}
           projectOrWorkspaceFlag="$(GHAScripts/ResolveProjectOrWorkspaceFlag "$projectKind")"
-          echo "::set-output name=project-or-workspace-flag::$projectOrWorkspaceFlag"
+          echo "project-or-workspace-flag=$projectOrWorkspaceFlag" >> $GITHUB_OUTPUT
 
       - name: Build .xcarchive
         shell: bash --noprofile --norc -x -euo pipefail {0}

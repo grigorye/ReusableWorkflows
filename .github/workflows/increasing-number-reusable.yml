@@ -22,4 +22,4 @@ jobs:
           epoch=$(date -d "2022-10-08T21:01:30Z" +%s)
           now=$(date +%s)
           monotonicallyIncreasingNumber=$((now-epoch))
-          echo "::set-output name=number::$monotonicallyIncreasingNumber"
+          echo "number=$monotonicallyIncreasingNumber" >> $GITHUB_OUTPUT
