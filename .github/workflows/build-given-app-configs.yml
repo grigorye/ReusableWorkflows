@@ -73,6 +73,7 @@ jobs:
     name: 'Build${{ matrix.build-config.configNameDummy }}'
     needs: [resolve-schemes, resolve-build-configs]
     strategy:
+      fail-fast: false
       matrix:
         build-config:
           - name: 'AppStore'
