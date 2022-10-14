@@ -70,6 +70,9 @@ defaults:
   run:
     shell: /bin/bash --noprofile -x -euo pipefail {0}
 
+env:
+  XCPRETTY_ENABLED: NO
+
 jobs:
   build:
     name: ${{ inputs.jobName }}
