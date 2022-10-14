@@ -153,6 +153,8 @@ jobs:
           increasingNumber=${{ inputs.increasingNumber }}
           BUNDLE_VERSION="${BUNDLE_VERSION:-$(GHAScripts/BundleVersion "$increasingNumber")}"
           MARKETING_PATCH_VERSION="${MARKETING_PATCH_VERSION:-$(GHAScripts/MarketingPatchVersion)}"
+          MARKETING_MAJOR_MINOR_VERSION="${MARKETING_MAJOR_MINOR_VERSION:-$(GHAScripts/MarketingMajorMinorVersion)}"
+          MARKETING_VERSION="${MARKETING_VERSION:-$MARKETING_MAJOR_MINOR_VERSION.$MARKETING_PATCH_VERSION}"
 
           echo "BUNDLE_VERSION=$BUNDLE_VERSION" >> $GITHUB_ENV
           echo "MARKETING_PATCH_VERSION=$MARKETING_PATCH_VERSION" >> $GITHUB_ENV
@@ -242,7 +244,7 @@ jobs:
             -authenticationKeyID "$APP_STORE_AUTHENTICATION_KEY_ID" \
             -authenticationKeyIssuerID "$APP_STORE_AUTHENTICATION_KEY_ISSUER_ID" \
             BUNDLE_VERSION="$BUNDLE_VERSION" \
-            MARKETING_PATCH_VERSION="$MARKETING_PATCH_VERSION" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
             | xcpretty
           ./GHAScripts/gh-tar "$(dirname "$ARCHIVE_PATH")" "$ARCHIVE_PATH"
 
