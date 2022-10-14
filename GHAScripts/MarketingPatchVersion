@@ -1,0 +1,10 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
+
+[ "$pr" != "null" ]
+
+echo "$pr"

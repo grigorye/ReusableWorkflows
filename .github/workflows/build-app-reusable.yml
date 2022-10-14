@@ -152,8 +152,10 @@ jobs:
           # Create variables
           increasingNumber=${{ inputs.increasingNumber }}
           BUNDLE_VERSION="${BUNDLE_VERSION:-$(GHAScripts/BundleVersion "$increasingNumber")}"
+          MARKETING_PATCH_VERSION="${MARKETING_PATCH_VERSION:-$(GHAScripts/MarketingPatchVersion)}"
 
           echo "BUNDLE_VERSION=$BUNDLE_VERSION" >> $GITHUB_ENV
+          echo "MARKETING_PATCH_VERSION=$MARKETING_PATCH_VERSION" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$PRODUCT_NAME" >> $GITHUB_ENV
           echo "ARCHIVE_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$BUNDLE_VERSION-${{ inputs.buildConfigName }}.xcarchive" >> $GITHUB_ENV
           echo "DMG_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$BUNDLE_VERSION.dmg" >> $GITHUB_ENV
@@ -240,6 +242,7 @@ jobs:
             -authenticationKeyID "$APP_STORE_AUTHENTICATION_KEY_ID" \
             -authenticationKeyIssuerID "$APP_STORE_AUTHENTICATION_KEY_ISSUER_ID" \
             BUNDLE_VERSION="$BUNDLE_VERSION" \
+            MARKETING_PATCH_VERSION="$MARKETING_PATCH_VERSION" \
             | xcpretty
           ./GHAScripts/gh-tar "$(dirname "$ARCHIVE_PATH")" "$ARCHIVE_PATH"
 
