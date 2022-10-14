@@ -64,7 +64,7 @@ jobs:
             build_app_store="$(echo "$build_configs" | jq -r 'any(.[]; . == "app-store")')"
             echo "build-app-store=$build_app_store" >> $GITHUB_OUTPUT
             build_developer_id="$(echo "$build_configs" | jq -r 'any(.[]; . == "developer-id")')"
-            echo "build-developer-id=$build_developer_id)" >> $GITHUB_OUTPUT
+            echo "build-developer-id=$build_developer_id" >> $GITHUB_OUTPUT
             build_ios="$(echo "$build_configs" | jq -r 'any(.[]; . == "ios")')"
             echo "build-ios=$build_ios" >> $GITHUB_OUTPUT
           fi
