@@ -152,15 +152,17 @@ jobs:
           # Create variables
           increasingNumber=${{ inputs.increasingNumber }}
           BUNDLE_VERSION="${BUNDLE_VERSION:-$(GHAScripts/BundleVersion "$increasingNumber")}"
-          MARKETING_PATCH_VERSION="${MARKETING_PATCH_VERSION:-$(GHAScripts/MarketingPatchVersion)}"
-          MARKETING_MAJOR_MINOR_VERSION="${MARKETING_MAJOR_MINOR_VERSION:-$(GHAScripts/MarketingMajorMinorVersion)}"
-          MARKETING_VERSION="${MARKETING_VERSION:-$MARKETING_MAJOR_MINOR_VERSION.$MARKETING_PATCH_VERSION}"
+          marketingPatchVersion="${MARKETING_PATCH_VERSION:-$(GHAScripts/MarketingPatchVersion)}"
+          marketingMajorMinorVersion="${MARKETING_MAJOR_MINOR_VERSION:-$(GHAScripts/MarketingMajorMinorVersion)}"
+          MARKETING_VERSION="${MARKETING_VERSION:-$marketingMajorMinorVersion.$marketingPatchVersion}"
+          PRODUCT_VERSION="$MARKETING_VERSION-$BUNDLE_VERSION"
 
           echo "BUNDLE_VERSION=$BUNDLE_VERSION" >> $GITHUB_ENV
-          echo "MARKETING_PATCH_VERSION=$MARKETING_PATCH_VERSION" >> $GITHUB_ENV
+          echo "MARKETING_VERSION=$MARKETING_VERSION" >> $GITHUB_ENV
+          echo "PRODUCT_VERSION=$PRODUCT_VERSION" >> $GITHUB_ENV
           echo "PRODUCT_NAME=$PRODUCT_NAME" >> $GITHUB_ENV
-          echo "ARCHIVE_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$BUNDLE_VERSION-${{ inputs.buildConfigName }}.xcarchive" >> $GITHUB_ENV
-          echo "DMG_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$BUNDLE_VERSION.dmg" >> $GITHUB_ENV
+          echo "ARCHIVE_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$PRODUCT_VERSION-${{ inputs.buildConfigName }}.xcarchive" >> $GITHUB_ENV
+          echo "DMG_PATH=$RUNNER_TEMP/$PRODUCT_NAME-$PRODUCT_VERSION.dmg" >> $GITHUB_ENV
 
       - name: Create Keychain
         env:
