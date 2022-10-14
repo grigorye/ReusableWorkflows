@@ -37,7 +37,7 @@ on:
 
 defaults:
   run:
-    shell: bash {0}
+    shell: bash --noprofile --norc -x -euo pipefail {0}
 
 jobs:
   tests:
