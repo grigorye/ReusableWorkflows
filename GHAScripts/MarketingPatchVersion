@@ -5,6 +5,8 @@ set -euo pipefail
 
 pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
 
-[ "$pr" != "null" ]
-
-echo "$pr"
+if [ "$pr" != "null" ]; then
+    echo "$pr"
+else
+    echo ""
+fi
