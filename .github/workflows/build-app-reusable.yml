@@ -208,7 +208,7 @@ jobs:
         run: |
           rm -rf ~/Library/MobileDevice/Provisioning\ Profiles
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         if: ${{ false }}
         with:
           path: ${{ env.DERIVED_DATA_PATH }}/SourcePackages
