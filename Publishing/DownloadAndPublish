@@ -1,0 +1,50 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+shopt -s nullglob
+
+lastRun="$1"
+shift
+secretsDir="$1"
+shift
+casksDir="$1"
+shift
+appName="$1"
+shift
+formulaName="$1"
+shift
+
+bn=$(basename "$0")
+tmpdir=$(mktemp -d /tmp/"$bn".XXXXXX)
+
+for buildKind in DeveloperID AppStore; do
+    if gh run download "$lastRun" --name "xcarchive-$buildKind" --dir "$tmpdir"/"$buildKind"; then
+        tar -xf "$tmpdir"/"$buildKind"/*.xcarchive.tar -C "$tmpdir"/"$buildKind"
+        bundleID=$(/usr/libexec/PlistBuddy -c 'Print ApplicationProperties:CFBundleIdentifier' "$tmpdir"/"$buildKind"/*.xcarchive/Info.plist)
+        ./Publishing/UploadDSymsToCrashlytics "$tmpdir"/"$buildKind"/*.xcarchive
+    fi
+done
+
+# shellcheck disable=SC2019,SC2018
+bucket=$(echo "$bundleID" | sed 's/^.*\.\([^.]*\)$/\1/' | tr 'A-Z' 'a-z')
+
+./Publishing/DownloadDmg "$lastRun" "$tmpdir"/dmg
+
+dmgs=("$tmpdir"/dmg/*.dmg)
+dmg="${dmgs[0]}"
+dmgBasename=$(basename "$dmg")
+# macOS-app-0.1.9-655862.51.2.dmg -> 0.1.9,655862.51.2
+version=$(echo "$dmgBasename" | sed -e 's/\.dmg$//' | sed 's/^.*-\([0-9.]*-[0-9.]*\)$/\1/' | sed 's/-/,/')
+
+./Publishing/NotarizeDmg "$tmpdir"/dmg/*.dmg "$tmpdir"/notarized "$secretsDir" "$bundleID"
+
+publishedUrl=$(./Publishing/PublishDmg "$tmpdir"/notarized/*.dmg "$bucket")
+
+./Publishing/GenBrewFormula \
+    "$casksDir" \
+    "$formulaName" \
+    "$appName" \
+    "$tmpdir"/notarized/*.dmg \
+    "$publishedUrl" \
+    "$version"
