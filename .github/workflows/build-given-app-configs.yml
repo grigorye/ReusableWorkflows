@@ -77,7 +77,7 @@ jobs:
       matrix:
         build-config:
           - name: 'AppStore'
-            if: ${{ needs.resolve-build-configs.outputs.build-app-store == 'true' }}
+            if: ${{ needs.resolve-build-configs.outputs.build-app-store }}
             projectKind: 'AppStore'
             destination: 'generic/platform=macOS'
             scheme: ${{ needs.resolve-schemes.outputs.macos-app-scheme }}
@@ -86,7 +86,7 @@ jobs:
             exportOptionsPlist: 'dist/appstore-exportOptions.plist'
             configNameDummy: ''
           - name: 'DeveloperID'
-            if: ${{ needs.resolve-build-configs.outputs.build-developer-id == 'true' }}
+            if: ${{ needs.resolve-build-configs.outputs.build-developer-id }}
             projectKind: 'DeveloperID'
             destination: 'generic/platform=macOS'
             scheme: ${{ needs.resolve-schemes.outputs.macos-app-scheme }}
@@ -95,7 +95,7 @@ jobs:
             exportOptionsPlist: 'dist/developer-id-exportOptions.plist'
             configNameDummy: ''
           - name: 'iOS'
-            if: ${{ needs.resolve-build-configs.outputs.build-ios == 'true' }}
+            if: ${{ needs.resolve-build-configs.outputs.build-ios }}
             projectKind: 'AppStore'
             destination: 'generic/platform=iOS'
             scheme: ${{ needs.resolve-schemes.outputs.ios-app-scheme }}

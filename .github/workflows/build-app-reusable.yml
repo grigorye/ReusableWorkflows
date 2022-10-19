@@ -6,8 +6,8 @@ on:
       if:
         description: 'Whether to run this job'
         required: false
-        default: true
-        type: boolean
+        default: 'true'
+        type: string
       runs-on:
         description: 'The type of machine to run the job on'
         required: false
@@ -76,7 +76,7 @@ env:
 jobs:
   build:
     name: ${{ inputs.jobName }}
-    if: ${{ inputs.if }}
+    if: ${{ inputs.if == 'true' }}
     runs-on: ${{ inputs.runs-on }}
 
     env:
