@@ -11,8 +11,6 @@ wd="$(dirname "$0")"
 trunk="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
 
 prefetchTrunkIfNecessary() {
-    [ "$trunk" == "master" ] || [ "$trunk" == "main" ] || exit 1
-
     # Prefetch trunk to be able to calculate the number of commits in the branch.
     pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
 
