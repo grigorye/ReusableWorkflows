@@ -73,7 +73,7 @@ jobs:
           echo "XCRESULTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
           echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
 
-      - uses: maxim-lobanov/setup-xcode@v1.4.1
+      - uses: maxim-lobanov/setup-xcode@v1.5.1
         if: ${{ !env.ACT }}
         with:
           xcode-version: 'latest'

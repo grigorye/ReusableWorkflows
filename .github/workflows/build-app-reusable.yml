@@ -115,7 +115,7 @@ jobs:
           echo "EXPORT_PATH=$RUNNER_TEMP/build.export" >> $GITHUB_ENV
           echo "AUTHENTICATION_KEY_PATH=$RUNNER_TEMP/authentication.p8" >> $GITHUB_ENV
 
-      - uses: maxim-lobanov/setup-xcode@v1.4.1
+      - uses: maxim-lobanov/setup-xcode@v1.5.1
         if: ${{ !env.ACT }}
         with:
           xcode-version: 'latest'
