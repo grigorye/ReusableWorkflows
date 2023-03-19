@@ -274,7 +274,7 @@ jobs:
 
           if [ "${EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64:-}" != "" ]; then
             # Erase profiles automatically generated as part of building .xcarchive.
-            rm -r "$PROVISIONING_PROFILES_DIR"
+            rm -rf "$PROVISIONING_PROFILES_DIR"
             mkdir -p "$(dirname "$EXPORT_CUSTOM_PROVISIONING_PROFILE_PATH")"
 
             # import provisioning profile from secrets
