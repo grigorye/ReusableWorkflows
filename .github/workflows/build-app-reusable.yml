@@ -114,11 +114,12 @@ jobs:
           echo "DERIVED_DATA_PATH=$RUNNER_TEMP/build.derivedData" >> $GITHUB_ENV
           echo "EXPORT_PATH=$RUNNER_TEMP/build.export" >> $GITHUB_ENV
           echo "AUTHENTICATION_KEY_PATH=$RUNNER_TEMP/authentication.p8" >> $GITHUB_ENV
+          echo "XCODE_VERSION=$((test -f .xcode-version && cat .xcode-version) || echo latest)" >> $GITHUB_ENV
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         if: ${{ !env.ACT }}
         with:
-          xcode-version: 'latest'
+          xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: Install Brew
         if: ${{ env.ACT }}
