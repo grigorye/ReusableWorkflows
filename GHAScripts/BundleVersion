@@ -12,7 +12,7 @@ trunk="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
 
 prefetchTrunkIfNecessary() {
     # Prefetch trunk to be able to calculate the number of commits in the branch.
-    pr=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH" || true)
+    pr=$(jq --raw-output .pull_request.number "${GITHUB_EVENT_PATH:?}" || true)
 
     if [ "$pr" != "null" ]; then
         [ z"${ACT:-}" == z"true" ] || git fetch --no-tags origin "$trunk":"$trunk"
