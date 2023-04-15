@@ -10,7 +10,7 @@ trunk="$1"
 shift
 
 if ! ${__GIT_STATUS:-false}; then
-    status=$(git status)
+    status=$(git status --short)
     if [ -n "$status" ]; then
         echo '(Modified)'
         exit
