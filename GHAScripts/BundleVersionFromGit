@@ -9,8 +9,13 @@ shift
 trunk="$1"
 shift
 
-commits=$(git rev-list --count HEAD)
-commitsInBranch=$(git rev-list --count "$trunk"..HEAD)
+if ! ${__GIT_STATUS:-git status >/dev/null}; then
+    echo '(Modified)'
+    exit
+fi
+
+commits=${__GIT_COMMITS:-$(git rev-list --count HEAD)}
+commitsInBranch=${__GIT_COMMITS_IN_BRANCH:-$(git rev-list --count "$trunk"..HEAD)}
 commitsInTrunk=$((commits - commitsInBranch))
 
 bundleVersion="$versionNumber.$commitsInTrunk.$commitsInBranch"
