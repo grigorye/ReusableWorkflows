@@ -1,0 +1,74 @@
+name: Linux
+
+on:
+  workflow_call:
+    inputs:
+      bundle_version:
+        type: string
+        required: true
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -x -euo pipefail {0}
+
+env:
+  __BUNDLE_VERSION: ${{ inputs.bundle_version }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container:
+      image: swift:5.7.1-focal
+    steps:
+      - if: ${{ env.ACT }}
+        name: Hack container for local development
+        run: |
+          apt-get update
+          apt-get install -y nodejs zstd jq
+      - uses: actions/checkout@v3
+      - name: "Introspect Swift Package"
+        run: |
+          __PRODUCT_NAME=$(swift package dump-package | jq -r '.products[0].name')
+          echo "__PRODUCT_NAME=$__PRODUCT_NAME" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+      - name: "Swift Build"
+        run: |
+          swift build -v -c release -Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface
+      - run: |
+          chmod -R go+rx .build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.__PRODUCT_NAME }}
+          # `release` is a symlink, apply glob as a workaround for https://github.com/actions/upload-artifact/issues/92
+          path: |
+            .build/release*/${{ env.__PRODUCT_NAME }}
+            !.build/release?*
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: swift:5.7.1-focal
+    steps:
+      - if: ${{ env.ACT }}
+        name: Hack container for local development
+        run: |
+          apt-get update
+          apt-get install -y nodejs zstd
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        if: ${{ !env.ACT }}
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+      - run: |
+          swift test --enable-test-discovery
+      - run: |
+          chmod -R go+rx .build

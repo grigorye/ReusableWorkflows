@@ -1,0 +1,16 @@
+on:
+  workflow_call: {}
+
+jobs:
+  generate-versions:
+    uses: ./.github/workflows/generate-versions.yml
+  build-linux:
+    uses: ./.github/workflows/spm-tool-linux.yml
+    needs: generate-versions
+    with:
+      bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}
+  build-macos:
+    uses: ./.github/workflows/spm-tool-macos.yml
+    needs: generate-versions
+    with:
+      bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}

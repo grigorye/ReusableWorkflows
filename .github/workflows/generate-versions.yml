@@ -1,0 +1,41 @@
+name: "."
+
+on:
+  workflow_call:
+    outputs:
+      bundle_version:
+        description: "16088707.63.0"
+        value: ${{ jobs.compute.outputs.bundle_version }}
+      product_version:
+        description: "0.1-16088707.63.0"
+        value: ${{ jobs.compute.outputs.product_version }}
+      marketing_version:
+        description: "0.1"
+        value: ${{ jobs.compute.outputs.marketing_version }}
+
+jobs:
+  increasing-number:
+    name: "Increasing number"
+    uses: ./.github/workflows/increasing-number-reusable.yml
+
+  main:
+    runs-on: ubuntu-latest
+    needs: increasing-number
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: "Compute"
+        run: |
+          increasingNumber=${{ needs.increasing-number.outputs.number }}
+
+          BUNDLE_VERSION="${BUNDLE_VERSION:-$(GHAScripts/BundleVersion "$increasingNumber")}"
+          marketingPatchVersion="${MARKETING_PATCH_VERSION:-$(GHAScripts/MarketingPatchVersion)}"
+          marketingMajorMinorVersion="${MARKETING_MAJOR_MINOR_VERSION:-$(GHAScripts/MarketingMajorMinorVersion)}"
+          MARKETING_VERSION="${MARKETING_VERSION:-$marketingMajorMinorVersion${marketingPatchVersion:+.$marketingPatchVersion}}"
+          PRODUCT_VERSION="$MARKETING_VERSION-$BUNDLE_VERSION"
+
+          echo "bundle_version=$BUNDLE_VERSION" >> $GITHUB_OUTPUT
+          echo "marketing_version=$MARKETING_VERSION" >> $GITHUB_OUTPUT
+          echo "product_version=$PRODUCT_VERSION" >> $GITHUB_OUTPUT
