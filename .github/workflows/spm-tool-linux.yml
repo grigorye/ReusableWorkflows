@@ -11,11 +11,10 @@ defaults:
   run:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
-env:
-  __BUNDLE_VERSION: ${{ inputs.bundle_version }}
-
 jobs:
   release:
+    env:
+      __BUNDLE_VERSION: ${{ inputs.bundle_version }}
     runs-on: ubuntu-latest
     container:
       image: swift:5.7.1-focal
