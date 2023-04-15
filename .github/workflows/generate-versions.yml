@@ -16,7 +16,7 @@ on:
 jobs:
   increasing-number:
     name: "Increasing number"
-    uses: ./.github/workflows/increasing-number-reusable.yml
+    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v9
 
   main:
     runs-on: ubuntu-latest
