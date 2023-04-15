@@ -26,6 +26,8 @@ jobs:
           apt-get update
           apt-get install -y nodejs zstd jq
       - uses: actions/checkout@v3
+        with:
+          submodules: true
       - name: "Introspect Swift Package"
         run: |
           __PRODUCT_NAME=$(swift package dump-package | jq -r '.products[0].name')
