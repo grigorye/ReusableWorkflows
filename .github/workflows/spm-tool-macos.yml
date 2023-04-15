@@ -14,9 +14,11 @@ defaults:
 jobs:
   release:
     runs-on: macos-12
-    env:
-      __BUNDLE_VERSION: ${{ inputs.bundle_version }}
     steps:
+      - name: Prepare Environment
+        run: |
+          __BUNDLE_VERSION=${{ inputs.bundle_version }}
+          echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
           xcode-version: latest-stable
