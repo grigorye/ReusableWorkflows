@@ -33,7 +33,7 @@ jobs:
             ${{ runner.os }}-spm-
       - name: "Swift Build"
         run: |
-          swift build -v -c release
+          swift build -c release
 
   test:
     runs-on: macos-12
@@ -52,4 +52,4 @@ jobs:
             ${{ runner.os }}-spm-
       - name: "Swift Test"
         run: |
-          swift test -v
+          swift test

@@ -46,7 +46,7 @@ jobs:
             ${{ runner.os }}-spm-
       - name: "Swift Build"
         run: |
-          swift build -v -c release -Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface
+          swift build -c release -Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface
       - run: |
           chmod -R go+rx .build
       - uses: actions/upload-artifact@v3
