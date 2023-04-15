@@ -9,9 +9,12 @@ shift
 trunk="$1"
 shift
 
-if ! ${__GIT_STATUS:-git status >/dev/null}; then
-    echo '(Modified)'
-    exit
+if ! ${__GIT_STATUS:-false}; then
+    status=$(git status)
+    if [ -n "$status" ]; then
+        echo '(Modified)'
+        exit
+    fi
 fi
 
 commits=${__GIT_COMMITS:-$(git rev-list --count HEAD)}
