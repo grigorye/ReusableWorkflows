@@ -4,24 +4,15 @@ on:
 jobs:
   generate-versions:
     uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v9
-  sanity-checking:
-    runs-on: ubuntu-latest
-    needs: generate-versions
-    steps:
-      - name: "Sanity checking"
-        run: |
-          test -n "${{ needs.generate-versions.outputs.bundle_version }}"
   build-linux:
     uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-linux.yml@v9
     needs:
       - generate-versions
-      - sanity-checking
     with:
       bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}
   build-macos:
     uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-macos.yml@v9
     needs:
       - generate-versions
-      - sanity-checking
     with:
       bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}
