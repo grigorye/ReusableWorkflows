@@ -5,13 +5,13 @@ on:
     outputs:
       bundle_version:
         description: "16088707.63.0"
-        value: ${{ jobs.compute.outputs.bundle_version }}
+        value: ${{ jobs.main.outputs.bundle_version }}
       product_version:
         description: "0.1-16088707.63.0"
-        value: ${{ jobs.compute.outputs.product_version }}
+        value: ${{ jobs.main.outputs.product_version }}
       marketing_version:
         description: "0.1"
-        value: ${{ jobs.compute.outputs.marketing_version }}
+        value: ${{ jobs.main.outputs.marketing_version }}
 
 defaults:
   run:
