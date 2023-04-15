@@ -13,6 +13,10 @@ on:
         description: "0.1"
         value: ${{ jobs.compute.outputs.marketing_version }}
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -x -euo pipefail {0}
+
 jobs:
   increasing-number:
     name: "Increasing number"
