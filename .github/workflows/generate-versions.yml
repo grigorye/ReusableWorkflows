@@ -23,6 +23,10 @@ jobs:
     uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v9
 
   main:
+    outputs:
+      product_version: ${{ steps.compute.outputs.product_version }}
+      marketing_version: ${{ steps.compute.outputs.marketing_version }}
+      bundle_version: ${{ steps.compute.outputs.bundle_version }}
     runs-on: ubuntu-latest
     needs: increasing-number
     steps:
@@ -32,6 +36,7 @@ jobs:
           submodules: true
           fetch-depth: 0
       - name: "Compute"
+        id: compute
         run: |
           increasingNumber=${{ needs.increasing-number.outputs.number }}
 
