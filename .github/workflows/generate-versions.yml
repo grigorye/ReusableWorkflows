@@ -19,10 +19,10 @@ defaults:
 
 jobs:
   increasing-number:
-    name: "Increasing number"
     uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v9
 
   main:
+    name: "Generate versions"
     outputs:
       product_version: ${{ steps.compute.outputs.product_version }}
       marketing_version: ${{ steps.compute.outputs.marketing_version }}

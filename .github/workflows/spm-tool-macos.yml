@@ -13,6 +13,7 @@ defaults:
 
 jobs:
   release:
+    name: "Build macOS tool"
     runs-on: macos-12
     steps:
       - name: Prepare Environment
@@ -36,6 +37,7 @@ jobs:
           swift build -c release
 
   test:
+    name: "Test macOS tool"
     runs-on: macos-12
     steps:
       - name: Prepare Environment

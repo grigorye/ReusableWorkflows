@@ -11,12 +11,12 @@ defaults:
 
 jobs:
   generate:
-    name: 'Generate'
+    name: "Generate increasing number"
     runs-on: ubuntu-22.04
     outputs:
       number: ${{ steps.number.outputs.number }}
     steps:
-      - name: Generate the number
+      - name: "Generate the number"
         id: number
         run: |
           epoch=$(date -d "2022-10-08T21:01:30Z" +%s)

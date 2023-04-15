@@ -13,6 +13,7 @@ defaults:
 
 jobs:
   release:
+    name: "Build Linux tool"
     runs-on: ubuntu-latest
     container:
       image: swift:5.7.1-focal
@@ -58,6 +59,7 @@ jobs:
             !.build/release?*
 
   test:
+    name: "Test Linux tool"
     runs-on: ubuntu-latest
     container:
       image: swift:5.7.1-focal
