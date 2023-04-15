@@ -62,12 +62,18 @@ jobs:
     container:
       image: swift:5.7.1-focal
     steps:
+      - name: Prepare Environment
+        run: |
+          __BUNDLE_VERSION=${{ inputs.bundle_version }}
+          echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
       - if: ${{ env.ACT }}
         name: Hack container for local development
         run: |
           apt-get update
           apt-get install -y nodejs zstd
       - uses: actions/checkout@v3
+        with:
+          submodules: true
       - uses: actions/cache@v3
         if: ${{ !env.ACT }}
         with:
