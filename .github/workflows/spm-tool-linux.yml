@@ -16,6 +16,7 @@ defaults:
 
 jobs:
   env:
+    name: "Prepare (Linux)"
     runs-on: ubuntu-latest
     outputs:
       __SWIFT_VERSION: ${{ steps.gen.outputs.__SWIFT_VERSION }}
@@ -40,12 +41,12 @@ jobs:
     container:
       image: swift:${{ needs.env.outputs.__SWIFT_VERSION }}-focal
     steps:
-      - name: Prepare Environment
+      - name: "Prepare Environment"
         run: |
           __BUNDLE_VERSION=${{ inputs.bundle_version }}
           echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
       - if: ${{ env.ACT }}
-        name: Hack container for local development
+        name: "Hack container for local development"
         run: |
           apt-get update
           apt-get install -y nodejs zstd
@@ -90,12 +91,12 @@ jobs:
     container:
       image: swift:${{ needs.env.outputs.__SWIFT_VERSION }}-focal
     steps:
-      - name: Prepare Environment
+      - name: "Prepare Environment"
         run: |
           __BUNDLE_VERSION=${{ inputs.bundle_version }}
           echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
       - if: ${{ env.ACT }}
-        name: Hack container for local development
+        name: "Hack container for local development"
         run: |
           apt-get update
           apt-get install -y nodejs zstd
