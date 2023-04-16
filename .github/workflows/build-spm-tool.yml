@@ -2,17 +2,17 @@ on:
   workflow_call: {}
 
 jobs:
-  generate-versions:
+  versioning:
     uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v9
-  build-linux:
+  linux:
     uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-linux.yml@v9
     needs:
-      - generate-versions
+      - versioning
     with:
-      bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}
-  build-macos:
+      bundle_version: ${{ needs.versioning.outputs.bundle_version }}
+  macos:
     uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-macos.yml@v9
     needs:
-      - generate-versions
+      - versioning
     with:
-      bundle_version: ${{ needs.generate-versions.outputs.bundle_version }}
+      bundle_version: ${{ needs.versioning.outputs.bundle_version }}
