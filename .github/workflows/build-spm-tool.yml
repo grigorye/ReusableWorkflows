@@ -3,15 +3,15 @@ on:
 
 jobs:
   versioning:
-    uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v9
+    uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v10
   linux:
-    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-linux.yml@v9
+    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-linux.yml@v10
     needs:
       - versioning
     with:
       bundle_version: ${{ needs.versioning.outputs.bundle_version }}
   macos:
-    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-macos.yml@v9
+    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-macos.yml@v10
     needs:
       - versioning
     with:
