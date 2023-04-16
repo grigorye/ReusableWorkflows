@@ -20,9 +20,18 @@ jobs:
     outputs:
       __SWIFT_VERSION: ${{ steps.gen.outputs.__SWIFT_VERSION }}
     steps:
-      - id: gen
+      - run: |
+          echo '${{ toJSON(env) }}' > env.json
+      - id: jq
+        uses: sergeysova/jq-action@v2
+        with:
+          multiline: true
+          cmd: |
+            jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' env.json
+      - name: "Convert environment variables to output"
+        id: gen
         run: |
-          echo "__SWIFT_VERSION=$__SWIFT_VERSION" >> $GITHUB_OUTPUT
+          echo '${{ steps.jq.outputs.value }}' | sed 's/%0A/\n/g' >> $GITHUB_OUTPUT
 
   release:
     name: "Build (Linux)"
