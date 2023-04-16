@@ -49,16 +49,19 @@ jobs:
         run: |
           apt-get update
           apt-get install -y nodejs zstd
-      - name: Install build tools
-        run: |
-          apt-get update
-          apt-get install -y jq
       - uses: actions/checkout@v3
         with:
           submodules: true
+      - run: |
+          swift package dump-package > package-dump.json
+      - id: product-name
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: |
+            jq -r '.products[0].name' package-dump.json
       - name: "Introspect Swift Package"
         run: |
-          __PRODUCT_NAME=$(swift package dump-package | jq -r '.products[0].name')
+          __PRODUCT_NAME=${{ steps.product-name.outputs.value }}
           echo "__PRODUCT_NAME=$__PRODUCT_NAME" >> $GITHUB_ENV
       - uses: actions/cache@v3
         if: ${{ !env.ACT }}
