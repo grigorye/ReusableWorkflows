@@ -63,7 +63,7 @@ jobs:
           chmod -R go+rx .build
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.__PRODUCT_NAME }}
+          name: ${{ env.__PRODUCT_NAME }}-${{ inputs.os }}-${{ env.__BUNDLE_VERSION }}
           # `release` is a symlink, apply glob as a workaround for https://github.com/actions/upload-artifact/issues/92
           path: |
             .build/release*/${{ env.__PRODUCT_NAME }}
