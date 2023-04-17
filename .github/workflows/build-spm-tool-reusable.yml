@@ -41,7 +41,7 @@ jobs:
   release:
     needs:
       - config
-    name: "Build (${{ needs.config.os }})"
+    name: "Build (${{ inputs.os }})"
     runs-on: ${{ needs.config.outputs.os }} # ubuntu-latest
     container:
       image: ${{ inputs.image }} # swift:5.8-focal
