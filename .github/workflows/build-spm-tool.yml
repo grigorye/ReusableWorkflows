@@ -5,7 +5,7 @@ env:
   __LINUX_OS: ubuntu-latest
   __LINUX_SWIFT_VERSION: 5.8
   __LINUX_SWIFT_FLAGS: "-Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface"
-  __XCODE_VERSION: 13.0
+  __XCODE_VERSION: 14.2
   __MACOS_OS: macos-12
   __MACOS_SWIFT_FLAGS: "--arch arm64 --arch x86_64"
 
