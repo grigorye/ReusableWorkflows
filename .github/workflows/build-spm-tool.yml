@@ -28,7 +28,8 @@ jobs:
       __MACOS_OS: ${{ steps.gen.outputs.__MACOS_OS }}
       __MACOS_SWIFT_FLAGS: ${{ steps.gen.outputs.__MACOS_SWIFT_FLAGS }}
     steps:
-      - run: |
+      - name: "Prepare environment variables for conversion to JSON"
+        run: |
           echo '${{ toJSON(env) }}' > env.json
       - id: jq
         uses: sergeysova/jq-action@v2
@@ -65,7 +66,7 @@ jobs:
       product_name: ${{ needs.meta.outputs.product_name }}
 
   meta:
-    name: "Introspect Swift Package"
+    name: "Introspect Swift package"
     needs:
       - env
     runs-on: ${{ needs.env.outputs.__LINUX_OS }}
