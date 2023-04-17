@@ -16,7 +16,11 @@ jobs:
     name: "Prepare"
     runs-on: ubuntu-latest
     outputs:
-      __SWIFT_VERSION: ${{ steps.gen.outputs.__SWIFT_VERSION }}
+      __LINUX_SWIFT_VERSION: ${{ steps.gen.outputs.__LINUX_SWIFT_VERSION }}
+      __LINUX_SWIFT_FLAGS: ${{ steps.gen.outputs.__LINUX_SWIFT_FLAGS }}
+      __LINUX_OS: ${{ steps.gen.outputs.__LINUX_OS }}
+      __XCODE_VERSION: ${{ steps.gen.outputs.__XCODE_VERSION }}
+      __MACOS_OS: ${{ steps.gen.outputs.__MACOS_OS }}
     steps:
       - run: |
           echo '${{ toJSON(env) }}' > env.json
