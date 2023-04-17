@@ -7,6 +7,7 @@ env:
   __LINUX_SWIFT_FLAGS: "-Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface"
   __XCODE_VERSION: 13.0
   __MACOS_OS: macos-12
+  __MACOS_SWIFT_FLAGS: "--arch arm64 --arch x86_64"
 
 defaults:
   run:
@@ -25,6 +26,7 @@ jobs:
       __LINUX_OS: ${{ steps.gen.outputs.__LINUX_OS }}
       __XCODE_VERSION: ${{ steps.gen.outputs.__XCODE_VERSION }}
       __MACOS_OS: ${{ steps.gen.outputs.__MACOS_OS }}
+      __MACOS_SWIFT_FLAGS: ${{ steps.gen.outputs.__MACOS_SWIFT_FLAGS }}
     steps:
       - run: |
           echo '${{ toJSON(env) }}' > env.json
@@ -52,6 +54,7 @@ jobs:
             swift_flags: ${{ needs.env.outputs.__LINUX_SWIFT_FLAGS }}
           - os: ${{ needs.env.outputs.__MACOS_OS }}
             xcode_version: ${{ needs.env.outputs.__XCODE_VERSION }}
+            swift_flags: ${{ needs.env.outputs.__MACOS_SWIFT_FLAGS }}
     uses: grigorye/ReusableWorkflows/.github/workflows/build-spm-tool-reusable.yml@v11
     with:
       bundle_version: ${{ needs.versioning.outputs.bundle_version }}
