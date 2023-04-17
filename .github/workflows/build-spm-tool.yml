@@ -8,6 +8,10 @@ env:
   __XCODE_VERSION: 13.0
   __MACOS_OS: macos-12
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -x -euo pipefail {0}
+
 jobs:
   versioning:
     uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v11
@@ -39,6 +43,7 @@ jobs:
     needs:
       - versioning
       - env
+      - meta
     strategy:
       matrix:
         include:
@@ -54,3 +59,27 @@ jobs:
       image: ${{ matrix.image }}
       swift_flags: ${{ matrix.swift_flags }}
       xcode_version: ${{ matrix.xcode_version }}
+      product_name: ${{ needs.meta.outputs.product_name }}
+
+  meta:
+    name: "Introspect Swift Package"
+    needs:
+      - env
+    runs-on: ${{ needs.env.outputs.__LINUX_OS }}
+    container:
+      image: swift:${{ needs.env.outputs.__LINUX_SWIFT_VERSION }}-focal
+    outputs:
+      product_name: ${{ steps.gen.outputs.product_name }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          swift package dump-package > package-dump.json
+      - id: product-name
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: |
+            jq -r '.products[0].name' package-dump.json
+      - id: gen
+        run: |
+          product_name=${{ steps.product-name.outputs.value }}
+          echo "product_name=$product_name" >> $GITHUB_OUTPUT
