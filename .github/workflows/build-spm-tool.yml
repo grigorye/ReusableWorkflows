@@ -1,18 +1,51 @@
 on:
   workflow_call: {}
 
+env:
+  __LINUX_OS: ubuntu-latest
+  __LINUX_SWIFT_VERSION: 5.8
+  __LINUX_SWIFT_FLAGS: "-Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface"
+  __XCODE_VERSION: 13.0
+  __MACOS_OS: macos-12
+
 jobs:
   versioning:
     uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v10
-  linux:
-    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-linux.yml@v10
+
+  env:
+    name: "Prepare"
+    runs-on: ubuntu-latest
+    outputs:
+      __SWIFT_VERSION: ${{ steps.gen.outputs.__SWIFT_VERSION }}
+    steps:
+      - run: |
+          echo '${{ toJSON(env) }}' > env.json
+      - id: jq
+        uses: sergeysova/jq-action@v2
+        with:
+          multiline: true
+          cmd: |
+            jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' env.json
+      - name: "Convert environment variables to output"
+        id: gen
+        run: |
+          echo '${{ steps.jq.outputs.value }}' | sed 's/%0A/\n/g' >> $GITHUB_OUTPUT
+
+  build:
     needs:
       - versioning
+    strategy:
+      matrix:
+        include:
+          - os: ${{ needs.env.outputs.__LINUX_OS }}
+            image: swift:${{ needs.env.outputs.__LINUX_SWIFT_VERSION }}-focal
+            swift_flags: ${{ needs.env.outputs.__LINUX_SWIFT_FLAGS }}
+          - os: ${{ needs.env.outputs.__MACOS_OS }}
+            xcode_version: ${{ needs.env.outputs.__XCODE_VERSION }}
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-spm-tool-reusable.yml@v10
     with:
       bundle_version: ${{ needs.versioning.outputs.bundle_version }}
-  macos:
-    uses: grigorye/ReusableWorkflows/.github/workflows/spm-tool-macos.yml@v10
-    needs:
-      - versioning
-    with:
-      bundle_version: ${{ needs.versioning.outputs.bundle_version }}
+      os: ${{ matrix.os }}
+      image: ${{ matrix.image }}
+      swift_flags: ${{ matrix.swift_flags }}
+      xcode_version: ${{ matrix.xcode_version }}

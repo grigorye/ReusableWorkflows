@@ -1,45 +1,32 @@
-name: Linux
-
 on:
   workflow_call:
     inputs:
       bundle_version:
         type: string
         required: true
-
-env:
-  __SWIFT_VERSION: 5.8
+      platform:
+        type: string
+        required: true
+      image:
+        type: string
+        required: false
+      swift_flags:
+        type: string
+        required: false
+      xcode_version:
+        type: string
+        required: false
 
 defaults:
   run:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
 jobs:
-  env:
-    name: "Prepare (Linux)"
-    runs-on: ubuntu-latest
-    outputs:
-      __SWIFT_VERSION: ${{ steps.gen.outputs.__SWIFT_VERSION }}
-    steps:
-      - run: |
-          echo '${{ toJSON(env) }}' > env.json
-      - id: jq
-        uses: sergeysova/jq-action@v2
-        with:
-          multiline: true
-          cmd: |
-            jq -r 'to_entries | .[] | .key + "=" + (.value | @sh)' env.json
-      - name: "Convert environment variables to output"
-        id: gen
-        run: |
-          echo '${{ steps.jq.outputs.value }}' | sed 's/%0A/\n/g' >> $GITHUB_OUTPUT
-
   release:
-    name: "Build (Linux)"
-    runs-on: ubuntu-latest
-    needs: env
+    name: "Build (${{ inputs.platform }})"
+    runs-on: ${{ inputs.platform }} # ubuntu-latest
     container:
-      image: swift:${{ needs.env.outputs.__SWIFT_VERSION }}-focal
+      image: ${{ inputs.image }} # swift:5.8-focal
     steps:
       - name: "Prepare Environment"
         run: |
@@ -64,16 +51,20 @@ jobs:
         run: |
           __PRODUCT_NAME=${{ steps.product-name.outputs.value }}
           echo "__PRODUCT_NAME=$__PRODUCT_NAME" >> $GITHUB_ENV
+      - if: ${{ inputs.platform == 'macos-latest' }}
+        uses: maxim-lobanov/setup-xcode@v1.5.1
+        with:
+          xcode-version: ${{ inputs.xcode_version }}
       - uses: actions/cache@v3
         if: ${{ !env.ACT }}
         with:
           path: .build
-          key: ${{ runner.os }}-swift-${{ env.__SWIFT_VERSION }}-spm-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-swift-${{ inputs.swift_version }}-spm-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
       - name: "Swift Build"
         run: |
-          swift build -c release -Xswiftc -static-stdlib -Xlinker -lCoreFoundation -Xlinker -lCFURLSessionInterface
+          swift build -c release ${{ inputs.swift_flags }}
       - run: |
           chmod -R go+rx .build
       - uses: actions/upload-artifact@v3
@@ -85,11 +76,10 @@ jobs:
             !.build/release?*
 
   test:
-    name: "Test (Linux)"
-    runs-on: ubuntu-latest
-    needs: env
+    name: "Test (${{ inputs.platform }})"
+    runs-on: ${{ inputs.platform }} # ubuntu-latest
     container:
-      image: swift:${{ needs.env.outputs.__SWIFT_VERSION }}-focal
+      image: ${{ inputs.image }} # swift:5.8-focal
     steps:
       - name: "Prepare Environment"
         run: |
@@ -107,10 +97,10 @@ jobs:
         if: ${{ !env.ACT }}
         with:
           path: .build
-          key: ${{ runner.os }}-swift-${{ env.__SWIFT_VERSION }}-spm-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-swift-${{ inputs.swift_version }}-spm-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
       - run: |
-          swift test --enable-test-discovery
+          swift test
       - run: |
           chmod -R go+rx .build
