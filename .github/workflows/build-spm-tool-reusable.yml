@@ -22,9 +22,24 @@ defaults:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
 jobs:
+  config:
+    name: "Config"
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.gen.outputs.os }}
+      image: ${{ steps.gen.outputs.image }}
+    steps:
+      - name: "Check if running in local environment"
+        id: gen
+        run: |
+          echo 'os=${{ inputs.os }}' >> $GITHUB_OUTPUT
+          echo 'image=${{ inputs.image }}' >> $GITHUB_OUTPUT
+
   release:
-    name: "Build (${{ inputs.os }})"
-    runs-on: ${{ inputs.os }} # ubuntu-latest
+    needs:
+      - config
+    name: "Build (${{ needs.config.os }})"
+    runs-on: ${{ needs.config.outputs.os }} # ubuntu-latest
     container:
       image: ${{ inputs.image }} # swift:5.8-focal
     steps:
@@ -76,8 +91,10 @@ jobs:
             !.build/release?*
 
   test:
+    needs:
+      - config
     name: "Test (${{ inputs.os }})"
-    runs-on: ${{ inputs.os }} # ubuntu-latest
+    runs-on: ${{ needs.config.outputs.os }} # ubuntu-latest
     container:
       image: ${{ inputs.image }} # swift:5.8-focal
     steps:
