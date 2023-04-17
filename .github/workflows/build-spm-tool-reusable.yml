@@ -4,7 +4,7 @@ on:
       bundle_version:
         type: string
         required: true
-      platform:
+      os:
         type: string
         required: true
       image:
@@ -23,8 +23,8 @@ defaults:
 
 jobs:
   release:
-    name: "Build (${{ inputs.platform }})"
-    runs-on: ${{ inputs.platform }} # ubuntu-latest
+    name: "Build (${{ inputs.os }})"
+    runs-on: ${{ inputs.os }} # ubuntu-latest
     container:
       image: ${{ inputs.image }} # swift:5.8-focal
     steps:
@@ -51,7 +51,7 @@ jobs:
         run: |
           __PRODUCT_NAME=${{ steps.product-name.outputs.value }}
           echo "__PRODUCT_NAME=$__PRODUCT_NAME" >> $GITHUB_ENV
-      - if: ${{ inputs.platform == 'macos-latest' }}
+      - if: ${{ inputs.os == 'macos-latest' }}
         uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
           xcode-version: ${{ inputs.xcode_version }}
@@ -76,8 +76,8 @@ jobs:
             !.build/release?*
 
   test:
-    name: "Test (${{ inputs.platform }})"
-    runs-on: ${{ inputs.platform }} # ubuntu-latest
+    name: "Test (${{ inputs.os }})"
+    runs-on: ${{ inputs.os }} # ubuntu-latest
     container:
       image: ${{ inputs.image }} # swift:5.8-focal
     steps:
