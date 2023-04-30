@@ -18,8 +18,8 @@ xcodebuild() {
 }
 
 xcpretty() {
-    if [ "${XCPRETTY_ENABLED:-}" != "NO" ] && which xcpretty > /dev/null; then
-        command xcpretty
+    if [ "${XCPRETTY_ENABLED:-}" != "NO" ] && command -v xcbeautify >/dev/null; then
+        command xcbeautify -q
     elif [ "${XCODEBUILD_GREP_VERBOSE:-}" != "NO" ]; then
         grep --line-buffered -v '^ '
     else
