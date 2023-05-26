@@ -87,14 +87,7 @@ jobs:
       KEYCHAIN_NAME: app-signing.keychain-db
 
     steps:
-      - name: ACT preamble
-        if: ${{ env.ACT }}
-        shell: /bin/bash --noprofile --norc -x -euo pipefail {0}
-        run: |
-          ./GHALocal/bin/gh-runner-host-preamble
-
       - name: Dump GitHub Action Properties
-        if: ${{ !env.ACT }}
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
@@ -117,14 +110,8 @@ jobs:
           echo "XCODE_VERSION=$((test -f .xcode-version && cat .xcode-version) || echo latest)" >> $GITHUB_ENV
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
-        if: ${{ !env.ACT }}
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Install Brew
-        if: ${{ env.ACT }}
-        run: |
-          ./GHAShortcuts/InstallBrew
 
       - name: Install Dependencies
         run: |
@@ -205,10 +192,6 @@ jobs:
           security import "$EXPORT_CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
           security import "$EXPORT_CERTIFICATE_DEVELOPER_ID_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
-      - name: Erase profiles remaining from previous builds
-        run: |
-          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles
-
       - uses: actions/cache@v3
         if: ${{ false }}
         with:
@@ -250,12 +233,6 @@ jobs:
             MARKETING_VERSION="$MARKETING_VERSION" \
             | xcpretty
           ./GHAScripts/gh-tar "$(dirname "$ARCHIVE_PATH")" "$ARCHIVE_PATH"
-
-      - name: Pull .xcarchive
-        if: ${{ env.ACT }}
-        shell: bash --noprofile --norc -x -euo pipefail {0}
-        run: |
-          scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$ARCHIVE_PATH".tar "$ARCHIVE_PATH".tar
 
       - name: Save .xcarchive
         uses: actions/upload-artifact@v3
@@ -309,12 +286,6 @@ jobs:
               -format UDZO \
               "$DMG_PATH"
 
-      - name: Pull .dmg
-        if: ${{ env.ACT && inputs.buildConfigName == 'DeveloperID' }}
-        shell: /bin/bash --noprofile --norc -x -euo pipefail {0}
-        run: |
-          scp -pr "$REMOTE_RUNNER_USER"@host.docker.internal:"$DMG_PATH" "$DMG_PATH"
-
       - name: Save .dmg
         if: ${{ inputs.buildConfigName == 'DeveloperID' }}
         uses: actions/upload-artifact@v3
@@ -325,7 +296,7 @@ jobs:
             ${{ env.DMG_PATH }}
 
       - name: Upload to TestFlight
-        if: ${{ !env.ACT && (inputs.buildConfigName == 'AppStore' || inputs.buildConfigName == 'iOS') }}
+        if: ${{ inputs.buildConfigName == 'AppStore' || inputs.buildConfigName == 'iOS' }}
         run: |
           # create variables
           API_KEY_NAME="$APP_STORE_AUTHENTICATION_KEY_ID"
@@ -346,9 +317,3 @@ jobs:
             --file "$EXPORT_PATH"/*${{ inputs.packageExtension }} \
             --apiKey "$API_KEY_NAME" \
             --apiIssuer "$APP_STORE_AUTHENTICATION_KEY_ISSUER_ID"
-
-      - name: ACT epilogue
-        if: ${{ env.ACT && always() }}
-        shell: /bin/bash --noprofile --norc -x -euo pipefail {0}
-        run: |
-          ./GHALocal/bin/gh-runner-host-epilogue
