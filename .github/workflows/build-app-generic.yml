@@ -14,10 +14,10 @@ on:
 jobs:
   increasing-number:
     name: 'Increasing number'
-    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v12
+    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v13
   build:
     name: 'Generic'
-    uses: grigorye/ReusableWorkflows/.github/workflows/build-given-app-configs.yml@v12
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-given-app-configs.yml@v13
     needs: increasing-number
     with:
       increasing-number: ${{ needs.increasing-number.outputs.number }}
