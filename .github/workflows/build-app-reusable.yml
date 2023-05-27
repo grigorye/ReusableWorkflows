@@ -65,6 +65,8 @@ on:
         required: true
       EXPORT_CUSTOM_PROVISIONING_PROFILE_BASE64:
         required: false
+      SENTRY_API_TOKEN:
+        required: false
 
 defaults:
   run:
@@ -85,6 +87,7 @@ jobs:
       APP_STORE_AUTHENTICATION_KEY_ISSUER_ID: ${{ secrets.APP_STORE_AUTHENTICATION_KEY_ISSUER_ID }}
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       KEYCHAIN_NAME: app-signing.keychain-db
+      SENTRY_API_TOKEN: ${{ secrets.SENTRY_API_TOKEN }}
 
     steps:
       - name: Dump GitHub Action Properties
@@ -317,3 +320,25 @@ jobs:
             --file "$EXPORT_PATH"/*${{ inputs.packageExtension }} \
             --apiKey "$API_KEY_NAME" \
             --apiIssuer "$APP_STORE_AUTHENTICATION_KEY_ISSUER_ID"
+
+      - name: Install sentry-cli
+        if: ${{ env.SENTRY_API_TOKEN != '' }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.18.1" sh
+          sentry-cli --version
+  
+      - name: Upload to Sentry
+        if: ${{ env.SENTRY_API_TOKEN != '' }}
+        run: |
+          # create variables
+          SENTRY_ORG="${{ secrets.SENTRY_ORG }}"
+          SENTRY_PROJECT="${{ secrets.SENTRY_PROJECT }}"
+
+          sentry-cli upload-dif \
+            --log-level debug \
+            --auth-token "$SENTRY_API_TOKEN" \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            --include-sources \
+            --info-plist "$ARCHIVE_PATH"/*/Applications/*.app/Contents/Info.plist \
+            "$ARCHIVE_PATH"
