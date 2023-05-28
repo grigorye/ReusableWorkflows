@@ -324,7 +324,9 @@ jobs:
       - name: Install sentry-cli
         if: ${{ env.SENTRY_API_TOKEN != '' }}
         run: |
-          curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.18.1" sh
+          if [ ! -f /usr/local/bin/sentry-cli ]; then
+            curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.18.1" sh
+          fi
           sentry-cli --version
   
       - name: Upload to Sentry
