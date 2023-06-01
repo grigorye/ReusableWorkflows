@@ -129,10 +129,10 @@ jobs:
           EXPORT_CERTIFICATE_DEVELOPER_ID_PATH="$RUNNER_TEMP"/export_certificate_developer_id.p12
 
           # import certificate from secrets
-          echo -n "$APPLE_WWDR_CERTIFICATION_AUTHORITY_CER_BASE64" | base64 --decode --output "$APPLE_WWDR_CERTIFICATION_AUTHORITY_CER_PATH"
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output "$BUILD_CERTIFICATE_PATH"
-          echo -n "$EXPORT_CERTIFICATE_BASE64" | base64 --decode --output "$EXPORT_CERTIFICATE_PATH"
-          echo -n "$EXPORT_CERTIFICATE_DEVELOPER_ID_BASE64" | base64 --decode --output "$EXPORT_CERTIFICATE_DEVELOPER_ID_PATH"
+          echo -n "$APPLE_WWDR_CERTIFICATION_AUTHORITY_CER_BASE64" | base64 --decode -o "$APPLE_WWDR_CERTIFICATION_AUTHORITY_CER_PATH"
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$BUILD_CERTIFICATE_PATH"
+          echo -n "$EXPORT_CERTIFICATE_BASE64" | base64 --decode -o "$EXPORT_CERTIFICATE_PATH"
+          echo -n "$EXPORT_CERTIFICATE_DEVELOPER_ID_BASE64" | base64 --decode -o "$EXPORT_CERTIFICATE_DEVELOPER_ID_PATH"
 
           # import certificate to keychain
           security import "$APPLE_WWDR_CERTIFICATION_AUTHORITY_CER_PATH" -k "$KEYCHAIN_PATH"
