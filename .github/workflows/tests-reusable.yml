@@ -93,8 +93,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.mint
-          key: ${{ runner.os }}-mint-${{ hashFiles('**/Mintfile') }}
-          restore-keys: ${{ runner.os }}-mint-
+          key: ${{ runner.os }}-${{ runner.temp }}-mint-${{ hashFiles('**/Mintfile') }}
+          restore-keys: ${{ runner.os }}-${{ runner.temp }}-mint-
 
       - name: Install Mint packages
         if: steps.mint-cache.outputs.cache-hit != 'true'
