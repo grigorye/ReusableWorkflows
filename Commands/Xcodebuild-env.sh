@@ -8,6 +8,7 @@ stderr-filter() {
 }
 
 xcodebuild() {
+    security list-keychains
     # I could not get status from stderr-filter pipe to be passed through (even
     # when employing PIPESTATUS), so for now it is disabled.
     if false; then
