@@ -176,6 +176,13 @@ jobs:
 
           ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT"
 
+      - name: Generate Report for Tests
+        uses: kishikawakatsumi/xcresulttool@v1.7.1
+        with:
+          path: ${{ env.TESTS_XCRESULT }}
+          title: 'Test Results'
+          upload-bundles: never
+  
       - name: Exit on Tests Malfunction
         run: |
           ./GHAShortcuts/ExitOnTestsMalfunction "$TESTS_XCRESULT"
@@ -188,6 +195,13 @@ jobs:
           echo "SNAPSHOTS_XCRESULT=$SNAPSHOTS_XCRESULT" >> $GITHUB_ENV
 
           ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT"
+
+      - name: Generate Report for Snapshots
+        uses: kishikawakatsumi/xcresulttool@v1.7.1
+        with:
+          path: ${{ env.SNAPSHOTS_XCRESULT }}
+          title: 'Snapshot Results'
+          upload-bundles: never
 
       - name: Exit on Snapshots Malfunction
         run: |
