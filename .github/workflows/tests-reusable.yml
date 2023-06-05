@@ -182,6 +182,7 @@ jobs:
 
       - name: Snapshots
         continue-on-error: true
+        id: snapshots
         run: |
           SNAPSHOTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.snapshotsScheme }}.xcresult
           echo "SNAPSHOTS_XCRESULT=$SNAPSHOTS_XCRESULT" >> $GITHUB_ENV
@@ -207,6 +208,7 @@ jobs:
             ${{ env.SNAPSHOTS_XCRESULT }}.tar
 
       - name: Regenerate Snapshots
+        if: ${{ steps.snapshots.outcome == 'failure' }}
         run: |
           . ./Commands/Xcodebuild-env.sh
           stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
@@ -231,6 +233,7 @@ jobs:
           scp "$REMOTE_RUNNER_USER"@host.docker.internal:"$REGENERATED_SNAPSHOTS_ARCHIVE" "$REGENERATED_SNAPSHOTS_ARCHIVE"
 
       - name: Save Regenerated Snapshots
+        if: ${{ steps.snapshots.outcome == 'failure' }}
         uses: actions/upload-artifact@v3
         with:
           name: regenerated-snapshots
