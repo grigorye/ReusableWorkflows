@@ -168,15 +168,14 @@ jobs:
             -scheme '${{ inputs.allScheme }}' \
             | xcpretty
 
-      - name: Tests
-        continue-on-error: true
+      - name: Run Tests
         run: |
           TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}.xcresult
           echo "TESTS_XCRESULT=$TESTS_XCRESULT" >> $GITHUB_ENV
 
           ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT"
 
-      - name: Generate Report for Tests
+      - name: Check Test Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.TESTS_XCRESULT }}
@@ -187,16 +186,21 @@ jobs:
         run: |
           ./GHAShortcuts/ExitOnTestsMalfunction "$TESTS_XCRESULT"
 
-      - name: Snapshots
-        continue-on-error: true
+      - name: Run Snapshots
         id: snapshots
         run: |
           SNAPSHOTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.snapshotsScheme }}.xcresult
           echo "SNAPSHOTS_XCRESULT=$SNAPSHOTS_XCRESULT" >> $GITHUB_ENV
 
-          ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT"
+          exit_code=0
+          ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT" || exit_code=$?
+          if [ "$exit_code" == "65" ]; then
+            echo "differences-revealed=true" >> $GITHUB_OUTPUT
+          else
+            exit "$exit_code"
+          fi
 
-      - name: Generate Report for Snapshots
+      - name: Check Snapshot Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.SNAPSHOTS_XCRESULT }}
@@ -222,7 +226,7 @@ jobs:
             ${{ env.SNAPSHOTS_XCRESULT }}.tar
 
       - name: Regenerate Snapshots
-        if: ${{ steps.snapshots.outcome == 'failure' }}
+        if: ${{ steps.snapshots.outputs.differences-revealed }}
         run: |
           . ./Commands/Xcodebuild-env.sh
           stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
@@ -247,18 +251,13 @@ jobs:
           scp "$REMOTE_RUNNER_USER"@host.docker.internal:"$REGENERATED_SNAPSHOTS_ARCHIVE" "$REGENERATED_SNAPSHOTS_ARCHIVE"
 
       - name: Save Regenerated Snapshots
-        if: ${{ steps.snapshots.outcome == 'failure' }}
+        if: ${{ steps.snapshots.outputs.differences-revealed }}
         uses: actions/upload-artifact@v3
         with:
           name: regenerated-snapshots
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
-
-      - name: Report Snapshots Failure
-        run: |
-          testExitCode=$(cat "$XCRESULTS_DIRECTORY"/${{ inputs.snapshotsScheme }}.exit-code)
-          exit "$testExitCode"
 
       - name: ACT epilogue
         if: ${{ env.ACT && always() }}
