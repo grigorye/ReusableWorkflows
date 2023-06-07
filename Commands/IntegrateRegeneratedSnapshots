@@ -1,0 +1,18 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+bn=$(basename "$0")
+
+tmpdir=$(mktemp -d /tmp/"$bn".XXXXX)
+
+gh run download \
+    --name regenerated-snapshots \
+    --dir "$tmpdir"
+
+mkdir "$tmpdir"/snapshots
+
+tar -xzf "$tmpdir"/*.tar.gz -C "$tmpdir"/snapshots
+
+rsync -rtlv "$tmpdir"/snapshots/ ./
