@@ -37,11 +37,6 @@ jobs:
           echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
           __PRODUCT_NAME=${{ inputs.product_name }}
           echo "__PRODUCT_NAME=$__PRODUCT_NAME" >> $GITHUB_ENV
-      - if: ${{ env.ACT }}
-        name: "Hack container for local development"
-        run: |
-          apt-get update
-          apt-get install -y nodejs zstd
       - uses: actions/checkout@v3
         with:
           submodules: true
@@ -50,7 +45,6 @@ jobs:
         with:
           xcode-version: ${{ inputs.xcode_version }}
       - uses: actions/cache@v3
-        if: ${{ !env.ACT }}
         with:
           path: .build
           key: ${{ runner.os }}-swift-${{ inputs.swift_version }}-spm-${{ hashFiles('**/Package.resolved') }}
@@ -79,16 +73,10 @@ jobs:
         run: |
           __BUNDLE_VERSION=${{ inputs.bundle_version }}
           echo "__BUNDLE_VERSION=$__BUNDLE_VERSION" >> $GITHUB_ENV
-      - if: ${{ env.ACT }}
-        name: "Hack container for local development"
-        run: |
-          apt-get update
-          apt-get install -y nodejs zstd
       - uses: actions/checkout@v3
         with:
           submodules: true
       - uses: actions/cache@v3
-        if: ${{ !env.ACT }}
         with:
           path: .build
           key: ${{ runner.os }}-swift-${{ inputs.swift_version }}-spm-${{ hashFiles('**/Package.resolved') }}
