@@ -19,7 +19,7 @@ defaults:
 
 jobs:
   bump:
-    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v13
+    uses: grigorye/ReusableWorkflows/.github/workflows/increasing-number-reusable.yml@v14
 
   main:
     name: "Generate versions"
