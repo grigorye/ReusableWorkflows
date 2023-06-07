@@ -17,6 +17,10 @@ on:
       snapshotsScheme:
         required: true
         type: string
+    outputs:
+      all-tests-passed:
+        description: "All tests passed"
+        value: ${{ jobs.tests.outputs.all-tests-passed }}
     secrets:
       APP_STORE_AUTHENTICATION_KEY_BASE64:
         required: true
@@ -43,6 +47,9 @@ jobs:
   tests:
     name: 'Tests'
     runs-on: ${{ inputs.runs-on }}
+
+    outputs:
+      all-tests-passed: ${{ steps.snapshots.outputs.differences-revealed != 'true' && steps.snapshots.conclusion == 'success' && steps.unit-tests.outputs.tests-failed != true && steps.unit-tests.conclusion == 'success' }}
 
     env:
       PROJECT_KIND: 'DeveloperID'
@@ -168,12 +175,19 @@ jobs:
             -scheme '${{ inputs.allScheme }}' \
             | xcpretty
 
-      - name: Run Tests
+      - name: Run Unit Tests
+        id: unit-tests
         run: |
           TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}.xcresult
           echo "TESTS_XCRESULT=$TESTS_XCRESULT" >> $GITHUB_ENV
 
-          ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT"
+          exit_code=0
+          ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT" || exit_code=$?
+          if [ "$exit_code" == "65" ]; then
+            echo "tests-failed=true" >> $GITHUB_OUTPUT
+          else
+            exit "$exit_code"
+          fi
 
       - name: Check Test Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
