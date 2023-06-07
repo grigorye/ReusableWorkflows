@@ -194,13 +194,22 @@ jobs:
           SNAPSHOTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.snapshotsScheme }}.xcresult
           echo "SNAPSHOTS_XCRESULT=$SNAPSHOTS_XCRESULT" >> $GITHUB_ENV
 
+          . ./Commands/Xcodebuild-env.sh
+          
+          stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
+
           exit_code=0
-          ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT" || exit_code=$?
+          env \
+            TEST_RUNNER_SNAPSHOT_RECORDING=YES \
+            ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT" || exit_code=$?
+          
+          [ "$exit_code" -eq 65 ] || [ "$exit_code" -eq 0 ] || exit "$exit_code"
+
           if [ "$exit_code" == "65" ]; then
             echo "differences-revealed=true" >> $GITHUB_OUTPUT
-          else
-            exit "$exit_code"
           fi
+          
+          find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
 
       - name: Check Snapshot Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
@@ -221,27 +230,7 @@ jobs:
           path: |
             ${{ env.SNAPSHOTS_XCRESULT }}.tar
 
-      - name: Regenerate Snapshots
-        if: ${{ steps.snapshots.outputs.differences-revealed }}
-        run: |
-          . ./Commands/Xcodebuild-env.sh
-          stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
-          testExitCode=0
-          env \
-            TEST_RUNNER_SNAPSHOT_RECORDING=YES \
-            \
-            xcodebuild test \
-            -project Xcodeproj/*-"$PROJECT_KIND".xcodeproj \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
-            -disableAutomaticPackageResolution \
-            -scheme '${{ inputs.snapshotsScheme }}' \
-            | xcpretty \
-            || testExitCode=${PIPESTATUS[0]}
-          [ "$testExitCode" -eq 65 ] || exit "$testExitCode"
-          find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
-
       - name: Save Regenerated Snapshots
-        if: ${{ steps.snapshots.outputs.differences-revealed }}
         uses: actions/upload-artifact@v3
         with:
           name: regenerated-snapshots
