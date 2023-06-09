@@ -73,6 +73,8 @@ jobs:
           echo "DERIVED_DATA_PATH=$RUNNER_TEMP/build.derivedData" >> $GITHUB_ENV
           echo "XCRESULTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
           echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
+          echo "RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_PRIVATE_KEY', inputs.testsKind) }}" >> $GITHUB_ENV
+          echo "RW_GHA_CHECK_APP_ID_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_APP_ID', inputs.testsKind) }}" >> $GITHUB_ENV
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
@@ -176,13 +178,24 @@ jobs:
             find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
+      # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
+      - name: Retrieve Token For Generating Test Results
+        id: gha_check_app_token
+        uses: tibdex/github-app-token@v1.8.0
+        env:
+          OPENSSL_CONF: /dev/null  # https://github.com/tibdex/github-app-token/issues/54
+        with:
+          app_id: ${{ secrets[env.RW_GHA_CHECK_APP_ID_SECRET_NAME] }}
+          private_key: ${{ secrets[env.RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME] }}
+
       - name: Check Test Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.TESTS_XCRESULT }}
           title: "${{ inputs.testsName }} Results"
           upload-bundles: never
-  
+          token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
+
       - name: Exit on Tests Malfunction
         run: |
           ./GHAShortcuts/ExitOnTestsMalfunction "$TESTS_XCRESULT"
