@@ -1,0 +1,9 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+. "$(dirname "$0")"/BrewLock.sh
+
+# Brew dependencies
+time brew bundle install -v --no-lock --file Brewfile.tests
