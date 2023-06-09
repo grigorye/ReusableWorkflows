@@ -152,17 +152,6 @@ jobs:
         run: |
           mint run xcodegen -s XcodeGen/Variant/${{ env.PROJECT_KIND }}.yml -r . -p Xcodeproj
 
-      - name: Build All
-        run: |
-          . ./Commands/Xcodebuild-env.sh
-          xcodebuild \
-            build \
-            -project Xcodeproj/*-"$PROJECT_KIND".xcodeproj \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
-            -disableAutomaticPackageResolution \
-            -scheme '${{ inputs.allScheme }}' \
-            | xcpretty
-
       - name: Run Unit Tests
         id: unit-tests
         run: |
