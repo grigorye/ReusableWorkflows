@@ -8,19 +8,19 @@ on:
         required: false
         default: 'macos-12'
         type: string
-      allScheme:
-        required: true
-        type: string
       testsScheme:
         required: true
-        type: string
-      snapshotsScheme:
+        type: string # 'XXXUnitTests', 'XXXSnapshots' or whatever
+      testsKind:
         required: true
-        type: string
+        type: string # 'UnitTests' or 'Snapshots'
+      testsName:
+        required: true
+        type: string # 'Unit Tests', 'Snapshots' or whatever
     outputs:
-      all-tests-passed:
-        description: "All tests passed"
-        value: ${{ jobs.tests.outputs.all-tests-passed }}
+      tests-passed:
+        description: "Tests passed"
+        value: ${{ jobs.tests.outputs.tests-passed }}
     secrets:
       APP_STORE_AUTHENTICATION_KEY_BASE64:
         required: true
@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
 
     outputs:
-      all-tests-passed: ${{ steps.snapshots.outputs.differences-revealed != 'true' && steps.snapshots.conclusion == 'success' && steps.unit-tests.outputs.tests-failed != true && steps.unit-tests.conclusion == 'success' }}
+      tests-passed: ${{ steps.run-tests.outputs.tests-failed != 'true' && steps.run-tests.conclusion == 'success' }}
 
     env:
       PROJECT_KIND: 'DeveloperID'
@@ -152,77 +152,54 @@ jobs:
         run: |
           mint run xcodegen -s XcodeGen/Variant/${{ env.PROJECT_KIND }}.yml -r . -p Xcodeproj
 
-      - name: Run Unit Tests
-        id: unit-tests
+      - name: Run Tests
+        id: run-tests
         run: |
           TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}.xcresult
           echo "TESTS_XCRESULT=$TESTS_XCRESULT" >> $GITHUB_ENV
 
+          if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
+            stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
+            export TEST_RUNNER_SNAPSHOT_RECORDING=YES # Should have effect on RunTests
+          fi
+
           exit_code=0
           ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT" || exit_code=$?
+
+          [ "$exit_code" -eq 65 ] || [ "$exit_code" -eq 0 ] || exit "$exit_code"
+
           if [ "$exit_code" == "65" ]; then
             echo "tests-failed=true" >> $GITHUB_OUTPUT
-          else
-            exit "$exit_code"
+          fi
+
+          if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
+            find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
       - name: Check Test Results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.TESTS_XCRESULT }}
-          title: 'Test Results'
+          title: "${{ inputs.testsName }} Results"
           upload-bundles: never
   
       - name: Exit on Tests Malfunction
         run: |
           ./GHAShortcuts/ExitOnTestsMalfunction "$TESTS_XCRESULT"
 
-      - name: Run Snapshots
-        id: snapshots
-        run: |
-          SNAPSHOTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.snapshotsScheme }}.xcresult
-          echo "SNAPSHOTS_XCRESULT=$SNAPSHOTS_XCRESULT" >> $GITHUB_ENV
-
-          . ./Commands/Xcodebuild-env.sh
-          
-          stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
-
-          exit_code=0
-          env \
-            TEST_RUNNER_SNAPSHOT_RECORDING=YES \
-            ./GHAShortcuts/RunTests "${{ inputs.snapshotsScheme }}" "$SNAPSHOTS_XCRESULT" || exit_code=$?
-          
-          [ "$exit_code" -eq 65 ] || [ "$exit_code" -eq 0 ] || exit "$exit_code"
-
-          if [ "$exit_code" == "65" ]; then
-            echo "differences-revealed=true" >> $GITHUB_OUTPUT
-          fi
-          
-          find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
-
-      - name: Check Snapshot Results
-        uses: kishikawakatsumi/xcresulttool@v1.7.1
-        with:
-          path: ${{ env.SNAPSHOTS_XCRESULT }}
-          title: 'Snapshot Results'
-          upload-bundles: never
-
-      - name: Exit on Snapshots Malfunction
-        run: |
-          ./GHAShortcuts/ExitOnTestsMalfunction "$SNAPSHOTS_XCRESULT"
-
-      - name: Save .xcresult for Snapshots
+      - name: Save .xcresult
         uses: actions/upload-artifact@v3
         with:
-          name: snapshots-xcresult
+          name: ${{ inputs.testsScheme }}-xcresult
           if-no-files-found: error
           path: |
-            ${{ env.SNAPSHOTS_XCRESULT }}.tar
+            ${{ env.TESTS_XCRESULT }}.tar
 
       - name: Save Regenerated Snapshots
+        if: ${{ inputs.testsKind == 'Snapshots' }}
         uses: actions/upload-artifact@v3
         with:
-          name: regenerated-snapshots
+          name: ${{ inputs.testsScheme }}-Snapshots
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
