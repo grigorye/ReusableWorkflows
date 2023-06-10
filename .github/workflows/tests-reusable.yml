@@ -45,7 +45,7 @@ defaults:
 
 jobs:
   tests:
-    name: 'Tests'
+    name: Run ${{ inputs.testsName }}
     runs-on: ${{ inputs.runs-on }}
 
     outputs:
