@@ -193,6 +193,7 @@ jobs:
 
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
       - name: Retrieve Token For Generating Test Results
+        if: ${{ false }}
         id: gha_check_app_token
         uses: tibdex/github-app-token@v1.8.0
         env:
