@@ -194,7 +194,7 @@ jobs:
           path: ${{ env.TESTS_XCRESULT }}
           title: "${{ inputs.testsName }} Results"
           upload-bundles: never
-          token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
+          # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
 
       - name: Exit on Tests Malfunction
         run: |
