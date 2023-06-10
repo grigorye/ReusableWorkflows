@@ -166,9 +166,22 @@ jobs:
           fi
 
           exit_code=0
-          ./GHAShortcuts/RunTests "${{ inputs.testsScheme }}" "$TESTS_XCRESULT" || exit_code=$?
+          ./GHAScripts/XcodebuildTest \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            -scheme "${{ inputs.testsScheme }}" \
+            -resultBundlePath "$TESTS_XCRESULT" \
+            || exit_code=$?
 
-          [ "$exit_code" -eq 65 ] || [ "$exit_code" -eq 0 ] || exit "$exit_code"
+          # Save .xcresult even in case of failure.
+          ./GHAScripts/gh-tar "$(dirname "$TESTS_XCRESULT")" "$TESTS_XCRESULT"
+          
+          echo "exit-code=$exit_code" >> "$GITHUB_OUTPUT"
+
+          if [ "$exit_code" -ne 65 ] && [ "$exit_code" -ne 0 ]; then
+            echo "malfunction=true" >> $GITHUB_OUTPUT
+            echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
+            exit
+          fi
 
           if [ "$exit_code" == "65" ]; then
             echo "tests-failed=true" >> $GITHUB_OUTPUT
@@ -197,8 +210,9 @@ jobs:
           # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
 
       - name: Exit on Tests Malfunction
+        if: ${{ steps.run-tests.outputs.malfunction == 'true' }}
         run: |
-          ./GHAShortcuts/ExitOnTestsMalfunction "$TESTS_XCRESULT"
+          exit ${{ steps.run-tests.outputs.exit-code }}
 
       - name: Save .xcresult
         uses: actions/upload-artifact@v3

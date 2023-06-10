@@ -1,0 +1,17 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+. ./Commands/Xcodebuild-env.sh
+
+testExitCode=0
+
+./GHAShortcuts/Xcodebuild \
+    test \
+    -disableAutomaticPackageResolution \
+    "$@" |
+    xcpretty ||
+    testExitCode=${PIPESTATUS[0]}
+
+exit "$testExitCode"
