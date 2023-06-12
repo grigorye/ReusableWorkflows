@@ -191,6 +191,7 @@ jobs:
             obsolete_count=$(find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" | wc -l | sed 's/^ *//')
             if [ "$obsolete_count" -gt 0 ]; then
               echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
+              echo "::error title=Some snapshots are obsolete::There are $obsolete_count snapshots that were not regenerated."
             fi
             find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" -print0 | xargs -0 rm
             find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
