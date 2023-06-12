@@ -188,8 +188,12 @@ jobs:
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
-            find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
+            obsolete_count=$(find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" | wc -l | sed 's/^ *//')
+            if [ "$obsolete_count" -gt 0 ]; then
+              echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
+            fi
             find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" -print0 | xargs -0 rm
+            find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
@@ -235,7 +239,7 @@ jobs:
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
 
       - uses: actions/checkout@v3
-        if: ${{ github.event_name == 'pull_request' && inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
