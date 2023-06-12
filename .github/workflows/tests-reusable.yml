@@ -189,6 +189,7 @@ jobs:
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
             find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
+            find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" -print0 | xargs -0 rm
           fi
 
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
