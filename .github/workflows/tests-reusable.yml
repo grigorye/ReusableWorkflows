@@ -232,3 +232,17 @@ jobs:
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
+
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request' && inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Create Branch for Snapshots
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: 'Regenerated snapshots.'
+          new_branch: ${{ format('{0}-Regenerated-Snapshots', github.ref_name ) }}
+          add: '*.png'
