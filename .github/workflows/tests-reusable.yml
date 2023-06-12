@@ -185,6 +185,7 @@ jobs:
 
           if [ "$exit_code" == "65" ]; then
             echo "tests-failed=true" >> $GITHUB_OUTPUT
+            echo "::error title=Some ${{ inputs.testsScheme }} did fail::See ${{ inputs.testsName }} Results for more info."
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
