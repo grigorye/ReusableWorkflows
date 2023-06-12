@@ -163,6 +163,7 @@ jobs:
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
             stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
             export TEST_RUNNER_SNAPSHOT_RECORDING=YES # Should have effect on RunTests
+            export TEST_RUNNER_SNAPSHOT_SKIP_DIFF_MESSAGE=YES # Make failure reports less verbose.
           fi
 
           exit_code=0
