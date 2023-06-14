@@ -253,7 +253,7 @@ jobs:
         if: ${{ inputs.testsKind == 'Snapshots' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.testsScheme }}-Snapshots
+          name: ${{ inputs.testsScheme }}-Regenerated
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
