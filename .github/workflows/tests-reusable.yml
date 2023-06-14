@@ -207,6 +207,12 @@ jobs:
             git push origin --delete ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
           fi
 
+      - name: Prepare for creation of regenerated snapshot branch
+        uses: actions/checkout@v3
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
       - name: Create Branch for Snapshots
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
         uses: EndBug/add-and-commit@v9
@@ -264,8 +270,3 @@ jobs:
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
-
-      - uses: actions/checkout@v3
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
