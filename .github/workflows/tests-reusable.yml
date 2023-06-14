@@ -207,19 +207,19 @@ jobs:
             git push origin --delete ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
           fi
 
-      - name: Stash the snapshot changes
-        if: ${{ inputs.testsKind == 'Snapshots' }}
+      - name: Stash the snapshot changes, if exercising a PR
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash
 
-      - name: Prepare for creation of regenerated snapshot branch
+      - name: Prepare for creation of regenerated snapshot branch, if exercising a PR
         uses: actions/checkout@v3
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Unstash the snapshot changes
-        if: ${{ inputs.testsKind == 'Snapshots' }}
+      - name: Unstash the snapshot changes, if exercising a PR
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash pop
 
