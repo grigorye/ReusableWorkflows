@@ -200,6 +200,13 @@ jobs:
             find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
+      - name: Delete the previous version of snapshots branch
+        if: ${{ inputs.testsKind == 'Snapshots' }}
+        run: |
+          if git fetch origin ${{ env.REGENERATED_SNAPSHOTS_BRANCH }} 2>/dev/null; then
+            git push origin --delete ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
+          fi
+
       - name: Create Branch for Snapshots
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
         uses: EndBug/add-and-commit@v9
