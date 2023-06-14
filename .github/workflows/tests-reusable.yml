@@ -187,7 +187,7 @@ jobs:
 
           if [ "$exit_code" == "65" ]; then
             echo "tests-failed=true" >> $GITHUB_OUTPUT
-            echo "::error title=Some ${{ inputs.testsScheme }} did fail::See ${{ inputs.testsName }} Results for more info."
+            echo "::error title=${{ inputs.testsScheme }} did fail::See ${{ inputs.testsName }} Results for more info."
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
@@ -214,7 +214,7 @@ jobs:
       - name: Add a note about regenerated snapshots branch
         if: ${{ steps.snapshot-branch.outputs.committed == 'true' }}
         run: |
-          echo "::warning::Some snapshots were regenerated and put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+          echo "::notice title=Snapshots were regenerated::Some snapshots were regenerated and put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
       - name: Retrieve Token For Generating Test Results
