@@ -66,6 +66,7 @@ jobs:
       - name: Dump Environment
         run: |
           launchctl managername
+          automationmodetool
           env | sort
           git --no-pager log -10 --pretty=format:"%h %ad %an %s"
 
