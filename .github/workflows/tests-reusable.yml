@@ -270,43 +270,69 @@ jobs:
           fi
 
       - name: Delete the previous version of snapshots branch
-        if: ${{ inputs.testsKind == 'Snapshots' }}
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
           if git fetch origin ${{ env.REGENERATED_SNAPSHOTS_BRANCH }} 2>/dev/null; then
             git push origin --delete ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
           fi
 
       - name: Stash the snapshot changes, if exercising a PR
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash
 
       - name: Prepare for creation of regenerated snapshot branch, if exercising a PR
         uses: actions/checkout@v3
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Unstash the snapshot changes, if exercising a PR
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' && github.event_name == 'pull_request' }}
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash pop
 
       - name: Create Branch for Snapshots
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
+        id: snapshot-branch
+        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
           git checkout -b "$REGENERATED_SNAPSHOTS_BRANCH"
           git add *.png
-          git commit -m "Regenerated snapshots from ${{ inputs.testsScheme }}."
-          git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
+          if git commit -m "Regenerated snapshots from ${{ inputs.testsScheme }}."; then
+            echo "committed=true" >> $GITHUB_OUTPUT
+            git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
+          fi
 
       - name: Add a note about regenerated snapshots branch (or lack of it)
         if: ${{ inputs.testsKind == 'Snapshots' }}
         run: |
-          changed="${{ steps.run-tests.outputs.tests-failed }}"
-          if [ "$changed" == 'true' ]
+          committed=${{ steps.snapshot-branch.outputs.committed }}
+          if [ "$committed" == 'true' ]
           then
-            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were regenerated::${{ steps.run-tests.outputs.regenerated_count }} snapshots were regenerated, ${{ steps.run-tests.outputs.obsolete_count }} removed. All changes were put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+            verbalize_git_name_status() {
+              #
+              # Turns something like this:
+              # ```
+              # M    foo
+              # D    bar
+              # M    baz
+              # ```
+              # Into this: `1 deleted, 2 modified`
+              #
+
+              cut -f 1 `# cut first letter` |
+                sort `# prepare for uniq` |
+                sed -e 's/^A$/added/' -e 's/M/modified/' -e 's/D/deleted/' `# M -> modified, etc.` |
+                uniq -c `# count and compress them` |
+                sed 's/^ *//' `# drop initial spacing enforced by uniq` |
+                sed 's/$/,/' `# add comma to the end of line` |
+                tr '\n' ' ' `# join lines` |
+                sed 's/, $//' `# drop last comma and space`
+          
+              echo # Make it line-terminated
+            }
+            stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
+            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were changed::All changes were put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}. Of total ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots, $stats."
           else
             echo "::notice title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.regenerated_count }} snashots were regenerated without a change."
           fi
