@@ -269,14 +269,11 @@ jobs:
 
       - name: Create Branch for Snapshots
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.tests-failed == 'true' }}
-        uses: EndBug/add-and-commit@v9
-        id: snapshot-branch
-        with:
-          default_author: github_actions
-          message: 'Regenerated snapshots from ${{ inputs.testsScheme }}.'
-          new_branch: ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
-          push: --force --set-upstream origin ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
-          add: '*.png'
+        run: |
+          git checkout -b "$REGENERATED_SNAPSHOTS_BRANCH"
+          git add *.png
+          git commit -m "Regenerated snapshots from ${{ inputs.testsScheme }}."
+          git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
 
       - name: Add a note about regenerated snapshots branch (or lack of it)
         run: |
