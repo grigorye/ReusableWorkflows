@@ -227,11 +227,30 @@ jobs:
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
+            save_x() {
+              if [[ $- = *x* ]]; then
+                echo 'set -x'
+              else
+                echo 'set +x'
+              fi
+            }
             regenerated() {
-              find . -path '**+Snapshots/**/*.png' -newer "$stamp"
+              restore_x=$(save_x); set +x
+              TESTS_SCHEME='${{ inputs.testsScheme }}' GHAShortcuts/ListSnapshots | while read file; do
+                if [ "$file" -nt "$stamp" ]; then
+                  echo "$file"
+                fi
+              done
+              $restore_x
             }
             obsolete() {
-              find . -path '**+Snapshots/**/*.png' -not -newer "$stamp"
+              restore_x=$(save_x); set +x
+              TESTS_SCHEME='${{ inputs.testsScheme }}' GHAShortcuts/ListSnapshots | while read file; do
+                if [ "$file" -ot "$stamp" ]; then
+                  echo "$file"
+                fi
+              done
+              $restore_x
             }
             regenerated_count=$(regenerated | wc -l | sed 's/^ *//')
             obsolete_count=$(obsolete | wc -l | sed 's/^ *//')
