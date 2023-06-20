@@ -73,6 +73,7 @@ jobs:
         run: |
           echo "DERIVED_DATA_PATH=$RUNNER_TEMP/build.derivedData" >> $GITHUB_ENV
           echo "XCRESULTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
+          echo "TEST_PRODUCTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
           echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
           echo "RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_PRIVATE_KEY', inputs.testsKind) }}" >> $GITHUB_ENV
           echo "RW_GHA_CHECK_APP_ID_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_APP_ID', inputs.testsKind) }}" >> $GITHUB_ENV
@@ -156,10 +157,51 @@ jobs:
         run: |
           ./Commands/GenerateProject "$PROJECT_KIND"
 
+      - name: Build for testing
+        id: build-for-testing
+        run: |
+          BUILD_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}-build.xcresult
+          echo "BUILD_XCRESULT=$BUILD_XCRESULT" >> $GITHUB_ENV
+          TEST_PRODUCTS_PATH="$TEST_PRODUCTS_DIRECTORY/${{ inputs.testsScheme }}.xctestproducts"
+          echo "TEST_PRODUCTS_PATH=$TEST_PRODUCTS_PATH" >> $GITHUB_ENV
+
+          exit_code=0
+          ./ReusableWorkflows/GHAScripts/XcodebuildBuildForTesting \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            -scheme "${{ inputs.testsScheme }}" \
+            -resultBundlePath "$BUILD_XCRESULT" \
+            -testProductsPath "$TEST_PRODUCTS_PATH" \
+            | exit_code=$?
+
+          echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
+
+          # Save .xcresult even in case of failure.
+          ./GHAScripts/gh-tar "$(dirname "$BUILD_XCRESULT")" "$BUILD_XCRESULT"
+  
+      - name: Publish build results
+        uses: kishikawakatsumi/xcresulttool@v1.7.1
+        with:
+          path: ${{ env.BUILD_XCRESULT }}
+          title: "${{ inputs.testsName }} Build Results"
+          upload-bundles: never
+
+      - name: Save build.xcresult
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.testsScheme }}-build-xcresult
+          if-no-files-found: error
+          path: |
+            ${{ env.BUILD_XCRESULT }}.tar
+    
+      - name: Exit on build failure
+        if: ${{ steps.build-for-testing.outputs.exit-code != '0' }}
+        run: |
+          exit ${{ steps.build-for-testing.outputs.exit-code }}
+    
       - name: Run Tests
         id: run-tests
         run: |
-          TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}.xcresult
+          TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}-tests.xcresult
           echo "TESTS_XCRESULT=$TESTS_XCRESULT" >> $GITHUB_ENV
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
@@ -170,10 +212,11 @@ jobs:
 
           echo "::group::Run xcodebuild test"
           exit_code=0
-          ./GHAScripts/XcodebuildTest \
+          ./ReusableWorkflows/GHAScripts/XcodebuildTestWithoutBuilding \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "${{ inputs.testsScheme }}" \
             -resultBundlePath "$TESTS_XCRESULT" \
+            -testProductsPath "$TEST_PRODUCTS_PATH" \
             || exit_code=$?
           echo "::endgroup::"
 
@@ -270,7 +313,7 @@ jobs:
       - name: Save .xcresult
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.testsScheme }}-xcresult
+          name: ${{ inputs.testsScheme }}-tests-xcresult
           if-no-files-found: error
           path: |
             ${{ env.TESTS_XCRESULT }}.tar

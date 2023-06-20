@@ -1,0 +1,12 @@
+#! /bin/bash
+
+set -x
+set -euo pipefail
+
+. ./Commands/Xcodebuild-env.sh
+
+./GHAShortcuts/Xcodebuild \
+    build-for-testing \
+    -disableAutomaticPackageResolution \
+    "$@" |
+    xcpretty
