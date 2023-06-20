@@ -335,8 +335,8 @@ jobs:
         if: ${{ env.SENTRY_API_TOKEN != '' }}
         run: |
           # create variables
-          SENTRY_ORG="${{ secrets.SENTRY_ORG }}"
-          SENTRY_PROJECT="${{ secrets.SENTRY_PROJECT }}"
+          SENTRY_ORG="${{ vars.SENTRY_ORG }}"
+          SENTRY_PROJECT="${{ vars.SENTRY_PROJECT }}"
 
           sentry-cli upload-dif \
             --log-level debug \
