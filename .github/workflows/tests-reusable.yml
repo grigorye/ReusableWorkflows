@@ -298,7 +298,7 @@ jobs:
         run: |
           git checkout -b "$REGENERATED_SNAPSHOTS_BRANCH"
           git add *.png
-          if git commit -m "Regenerated snapshots from ${{ inputs.testsScheme }}."; then
+          if git commit -m "Regenerated snapshots via ${{ inputs.testsScheme }}."; then
             echo "committed=true" >> $GITHUB_OUTPUT
             git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
           fi
@@ -332,7 +332,7 @@ jobs:
               echo # Make it line-terminated
             }
             stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
-            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were changed::All changes were put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}. Of total ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots, $stats."
+            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were changed::Among ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots: $stats. Changes are pushed to ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
           else
             echo "::notice title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.regenerated_count }} snashots were regenerated without a change."
           fi
