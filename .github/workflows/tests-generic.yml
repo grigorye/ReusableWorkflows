@@ -9,12 +9,15 @@ on:
       snapshot-tests-scheme:
         type: string
         required: false
+      ui-snapshot-tests-scheme:
+        type: string
+        required: false  
       runs-on:
         type: string
         required: true
     outputs:
       tests-passed:
-        value: "${{ (inputs.unit-tests-scheme == '' || (jobs.unit-tests.result == 'success' && jobs.unit-tests.outputs.tests-passed == 'true')) && (inputs.snapshot-tests-scheme == '' || (jobs.snapshot-tests.result == 'success' && jobs.snapshot-tests.outputs.tests-passed == 'true')) }}"
+        value: "${{ (inputs.unit-tests-scheme == '' || (jobs.unit-tests.result == 'success' && jobs.unit-tests.outputs.tests-passed == 'true')) && (inputs.snapshot-tests-scheme == '' || (jobs.snapshot-tests.result == 'success' && jobs.snapshot-tests.outputs.tests-passed == 'true')) && (inputs.ui-snapshot-tests-scheme == '' || (jobs.ui-snapshot-tests.result == 'success' && jobs.ui-snapshot-tests.outputs.tests-passed == 'true')) }}"
 
 defaults:
   run:
@@ -37,7 +40,18 @@ jobs:
     uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
     secrets: inherit
     with:
-      runs-on: "['${{ inputs.runs-on }}', 'macos-ui-automation']"
+      runs-on: ${{ inputs.runs-on }}
       testsScheme: ${{ inputs.snapshot-tests-scheme }}
       testsKind: 'Snapshots'
       testsName: 'Snapshots'
+
+  ui-snapshot-tests:
+    name: 'UI Test Snapshots'
+    if: inputs.ui-snapshot-tests-scheme != ''
+    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
+    secrets: inherit
+    with:
+      runs-on: "['${{ inputs.runs-on }}', 'macos-ui-automation']"
+      testsScheme: ${{ inputs.ui-snapshot-tests-scheme }}
+      testsKind: 'Snapshots'
+      testsName: 'UI Snapshots'
