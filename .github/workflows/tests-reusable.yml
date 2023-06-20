@@ -71,7 +71,7 @@ jobs:
 
       - name: Setup Environment
         run: |
-          echo "DERIVED_DATA_PATH=$RUNNER_TEMP/build.derivedData" >> $GITHUB_ENV
+          echo "DERIVED_DATA_PATH=$PWD/tmp/build.derivedData" >> $GITHUB_ENV
           echo "XCRESULTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
           echo "TEST_PRODUCTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
           echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
