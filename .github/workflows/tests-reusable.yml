@@ -89,7 +89,7 @@ jobs:
 
       - name: Cache Mint packages
         id: mint-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.mint
           key: ${{ runner.os }}-${{ runner.temp }}-mint-${{ hashFiles('**/Mintfile') }}
