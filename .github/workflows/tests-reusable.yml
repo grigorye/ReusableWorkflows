@@ -227,18 +227,18 @@ jobs:
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
-            updated_count=$(find . -path '**+Snapshots/**/*.png' -newer "$stamp" | wc -l | sed 's/^ *//')
+            regenerated_count=$(find . -path '**+Snapshots/**/*.png' -newer "$stamp" | wc -l | sed 's/^ *//')
             obsolete_count=$(find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" | wc -l | sed 's/^ *//')
-            echo "updated_count=$updated_count" >> $GITHUB_OUTPUT
+            echo "regenerated_count=$regenerated_count" >> $GITHUB_OUTPUT
             echo "obsolete_count=$obsolete_count" >> $GITHUB_OUTPUT
-            if [ "$updated_count" == 0 ]; then
-              echo "::error title=No snapshots were regenerated::There're no snapshots regenerated; something is likely wrong."
+            if [ "$regenerated_count" == 0 ]; then
+              echo "::error title=No snapshots were regenerated in ${{ inputs.testsScheme }}::There're no snapshots regenerated; something is likely wrong."
               echo "malfunction=true" >> $GITHUB_OUTPUT
               exit
             fi
             if [ "$obsolete_count" -gt 0 ]; then
               echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
-              echo "::error title=Some snapshots are obsolete::There are $obsolete_count snapshots that were not regenerated."
+              echo "::error title=Some snapshots in ${{ inputs.testsScheme }} are obsolete::There are $obsolete_count snapshots that were not regenerated."
             fi
             find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" -print0 | xargs -0 rm
             find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
@@ -278,10 +278,15 @@ jobs:
           push: --force --set-upstream origin ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
           add: '*.png'
 
-      - name: Add a note about regenerated snapshots branch
-        if: ${{ steps.snapshot-branch.outputs.committed == 'true' }}
+      - name: Add a note about regenerated snapshots branch (or lack of it)
         run: |
-          echo "::notice title=Snapshots were regenerated::Some snapshots were regenerated (${{ steps.run-tests.outputs.updated_count }} new/updated, ${{ steps.run-tests.outputs.obsolete_count }} removed) and put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+          committed="${{ steps.snapshot-branch.outputs.committed }}"
+          if [ "$committed" == 'true' ]
+          then
+            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were regenerated::${{ steps.run-tests.outputs.regenerated_count }} snapshots were regenerated, ${{ steps.run-tests.outputs.obsolete_count }} removed.  put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+          else
+            echo "::notice title=No changes in ${{ inputs.testsScheme }}::(${{ steps.run-tests.outputs.regenerated_count }}) snashots were regenerated without a change."
+          fi
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
       - name: Retrieve Token For Generating Test Results
