@@ -8,5 +8,4 @@ set -euo pipefail
 ./GHAShortcuts/Xcodebuild \
     build-for-testing \
     -disableAutomaticPackageResolution \
-    "$@" |
-    xcpretty
+    "$@"
