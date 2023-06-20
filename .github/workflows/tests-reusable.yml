@@ -303,8 +303,8 @@ jobs:
       - name: Add a note about regenerated snapshots branch (or lack of it)
         if: ${{ inputs.testsKind == 'Snapshots' }}
         run: |
-          committed="${{ steps.snapshot-branch.outputs.committed }}"
-          if [ "$committed" == 'true' ]
+          changed="${{ steps.run-tests.outputs.tests-failed }}"
+          if [ "$changed" == 'true' ]
           then
             echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were regenerated::${{ steps.run-tests.outputs.regenerated_count }} snapshots were regenerated, ${{ steps.run-tests.outputs.obsolete_count }} removed. All changes were put in branch ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
           else
