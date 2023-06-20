@@ -174,13 +174,6 @@ jobs:
 
           # Save .xcresult even in case of failure.
           ./GHAScripts/gh-tar "$(dirname "$BUILD_XCRESULT")" "$BUILD_XCRESULT"
-  
-      - name: Publish build results
-        uses: kishikawakatsumi/xcresulttool@v1.7.1
-        with:
-          path: ${{ env.BUILD_XCRESULT }}
-          title: "${{ inputs.testsName }} Build Results"
-          upload-bundles: never
 
       - name: Save build.xcresult
         uses: actions/upload-artifact@v3
