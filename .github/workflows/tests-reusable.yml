@@ -263,7 +263,6 @@ jobs:
             fi
             if [ "$obsolete_count" -gt 0 ]; then
               echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
-              echo "::error title=Some snapshots in ${{ inputs.testsScheme }} are obsolete::There are $obsolete_count snapshots that were not regenerated."
             fi
             obsolete | tr '\n' '\0' | xargs -0 rm
             regenerated | tr '\n' '\0' | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
@@ -332,9 +331,9 @@ jobs:
               echo # Make it line-terminated
             }
             stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
-            echo "::notice title=Snapshots in ${{ inputs.testsScheme }} were changed::Among ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots: $stats. Changes are pushed to ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+            echo "::error title=Snapshots in ${{ inputs.testsScheme }} are not up to date::Among ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots: $stats. Changes are pushed to ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
           else
-            echo "::notice title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.regenerated_count }} snashots were regenerated without a change."
+            echo "::error title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.regenerated_count }} snashots were regenerated without a change."
           fi
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
