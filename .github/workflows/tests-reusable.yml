@@ -168,12 +168,14 @@ jobs:
             export TEST_RUNNER_SNAPSHOT_SKIP_DIFF_MESSAGE=YES # Make failure reports less verbose.
           fi
 
+          echo "::group::Run xcodebuild test"
           exit_code=0
           ./GHAScripts/XcodebuildTest \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "${{ inputs.testsScheme }}" \
             -resultBundlePath "$TESTS_XCRESULT" \
             || exit_code=$?
+          echo "::endgroup::"
 
           # Save .xcresult even in case of failure.
           ./GHAScripts/gh-tar "$(dirname "$TESTS_XCRESULT")" "$TESTS_XCRESULT"
