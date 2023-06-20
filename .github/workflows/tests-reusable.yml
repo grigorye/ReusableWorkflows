@@ -227,8 +227,14 @@ jobs:
           fi
 
           if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
-            regenerated_count=$(find . -path '**+Snapshots/**/*.png' -newer "$stamp" | wc -l | sed 's/^ *//')
-            obsolete_count=$(find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" | wc -l | sed 's/^ *//')
+            regenerated() {
+              find . -path '**+Snapshots/**/*.png' -newer "$stamp"
+            }
+            obsolete() {
+              find . -path '**+Snapshots/**/*.png' -not -newer "$stamp"
+            }
+            regenerated_count=$(regenerated | wc -l | sed 's/^ *//')
+            obsolete_count=$(obsolete | wc -l | sed 's/^ *//')
             echo "regenerated_count=$regenerated_count" >> $GITHUB_OUTPUT
             echo "obsolete_count=$obsolete_count" >> $GITHUB_OUTPUT
             if [ "$regenerated_count" == 0 ]; then
@@ -240,8 +246,8 @@ jobs:
               echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
               echo "::error title=Some snapshots in ${{ inputs.testsScheme }} are obsolete::There are $obsolete_count snapshots that were not regenerated."
             fi
-            find . -path '**+Snapshots/**/*.png' -not -newer "$stamp" -print0 | xargs -0 rm
-            find . -name '*.png' -newer "$stamp" -print0 | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
+            obsolete | tr '\n' '\0' | xargs -0 rm
+            regenerated | tr '\n' '\0' | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
       - name: Delete the previous version of snapshots branch
