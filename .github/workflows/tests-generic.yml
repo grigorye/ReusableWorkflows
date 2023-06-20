@@ -37,7 +37,7 @@ jobs:
     uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
     secrets: inherit
     with:
-      runs-on: ${{ inputs.runs-on }}
+      runs-on: "['${{ inputs.runs-on }}', 'macos-ui-automation']"
       testsScheme: ${{ inputs.snapshot-tests-scheme }}
       testsKind: 'Snapshots'
       testsName: 'Snapshots'
