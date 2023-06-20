@@ -9,6 +9,7 @@ testExitCode=0
 
 ./GHAShortcuts/Xcodebuild \
     test-without-building \
+    -disableAutomaticPackageResolution \
     "$@" |
     xcpretty ||
     testExitCode=${PIPESTATUS[0]}
