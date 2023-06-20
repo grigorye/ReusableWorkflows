@@ -301,6 +301,7 @@ jobs:
           git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
 
       - name: Add a note about regenerated snapshots branch (or lack of it)
+        if: ${{ inputs.testsKind == 'Snapshots' }}
         run: |
           committed="${{ steps.snapshot-branch.outputs.committed }}"
           if [ "$committed" == 'true' ]
