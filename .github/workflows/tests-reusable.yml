@@ -162,15 +162,12 @@ jobs:
         run: |
           BUILD_XCRESULT="$XCRESULTS_DIRECTORY"/${{ inputs.testsScheme }}-build.xcresult
           echo "BUILD_XCRESULT=$BUILD_XCRESULT" >> $GITHUB_ENV
-          TEST_PRODUCTS_PATH="$TEST_PRODUCTS_DIRECTORY/${{ inputs.testsScheme }}.xctestproducts"
-          echo "TEST_PRODUCTS_PATH=$TEST_PRODUCTS_PATH" >> $GITHUB_ENV
 
           exit_code=0
           ./ReusableWorkflows/GHAScripts/XcodebuildBuildForTesting \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "${{ inputs.testsScheme }}" \
             -resultBundlePath "$BUILD_XCRESULT" \
-            -testProductsPath "$TEST_PRODUCTS_PATH" \
             | exit_code=$?
 
           echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
@@ -216,7 +213,6 @@ jobs:
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "${{ inputs.testsScheme }}" \
             -resultBundlePath "$TESTS_XCRESULT" \
-            -testProductsPath "$TEST_PRODUCTS_PATH" \
             || exit_code=$?
           echo "::endgroup::"
 
