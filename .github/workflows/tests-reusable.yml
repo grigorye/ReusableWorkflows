@@ -44,21 +44,16 @@ defaults:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
 jobs:
-  tests:
-    name: Run ${{ inputs.testsName }}
-    runs-on: ${{ fromJSON(inputs.runs-on) }}    
 
-    outputs:
-      tests-passed: ${{ steps.run-tests.outputs.tests-failed != 'true' && steps.run-tests.conclusion == 'success' }}
+  build:
+    name: Build ${{ inputs.testsName }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
 
     env:
       PROJECT_KIND: 'DeveloperID'
-      RUN_STAMP: ${{ github.run_id }}.${{ github.run_attempt }}
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       KEYCHAIN_NAME: app-signing.keychain-db
       TESTS_SCHEME: ${{ inputs.testsScheme }}
-      TESTS_NAME: ${{ inputs.testsName }}
-      TESTING_SNAPSHOTS: ${{ inputs.testsKind == 'Snapshots' }}
 
     steps:
       - uses: actions/checkout@v2
@@ -68,20 +63,26 @@ jobs:
 
       - name: Dump Environment
         run: |
-          launchctl managername
-          automationmodetool
           env | sort
           git --no-pager log -10 --pretty=format:"%h %ad %an %s"
 
       - name: Setup Environment
         run: |
-          echo "DERIVED_DATA_PATH=$PWD/tmp/build.derivedData" >> $GITHUB_ENV
-          echo "XCRESULTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
-          echo "TEST_PRODUCTS_DIRECTORY=$RUNNER_TEMP" >> $GITHUB_ENV
-          echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
-          echo "RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_PRIVATE_KEY', inputs.testsKind) }}" >> $GITHUB_ENV
-          echo "RW_GHA_CHECK_APP_ID_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_APP_ID', inputs.testsKind) }}" >> $GITHUB_ENV
-          echo "UPDATED_SNAPSHOTS_BRANCH=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}-Updated-Snapshots-For-$TESTS_SCHEME" >> $GITHUB_ENV
+          tmpdir="$PWD/tmp"
+
+          DERIVED_DATA_PATH="$tmpdir/build.derivedData"
+          echo "DERIVED_DATA_PATH=$DERIVED_DATA_PATH" >> $GITHUB_ENV
+
+          XCRESULTS_DIRECTORY="$tmpdir/XCResults"
+          echo "XCRESULTS_DIRECTORY=$XCRESULTS_DIRECTORY" >> $GITHUB_ENV
+          mkdir -p "$XCRESULTS_DIRECTORY"
+
+          TEST_PRODUCTS_DIRECTORY="$tmpdir/TestProducts"
+          echo "TEST_PRODUCTS_DIRECTORY=$TEST_PRODUCTS_DIRECTORY" >> $GITHUB_ENV
+          mkdir -p "$TEST_PRODUCTS_DIRECTORY"
+
+          TEST_PRODUCTS="$TEST_PRODUCTS_DIRECTORY/${{ inputs.testsScheme }}.xctestproducts"
+          echo "TEST_PRODUCTS=$TEST_PRODUCTS" >> $GITHUB_ENV
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
@@ -166,21 +167,23 @@ jobs:
         run: |
           BUILD_XCRESULT="$XCRESULTS_DIRECTORY"/"$TESTS_SCHEME"-build.xcresult
           echo "BUILD_XCRESULT=$BUILD_XCRESULT" >> $GITHUB_ENV
-          TEST_PRODUCTS_PATH="$TEST_PRODUCTS_DIRECTORY/${{ inputs.testsScheme }}.xctestproducts"
-          echo "TEST_PRODUCTS_PATH=$TEST_PRODUCTS_PATH" >> $GITHUB_ENV
 
           exit_code=0
           ./ReusableWorkflows/GHAScripts/XcodebuildBuildForTesting \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "$TESTS_SCHEME" \
             -resultBundlePath "$BUILD_XCRESULT" \
-            -testProductsPath "$TEST_PRODUCTS_PATH" \
+            -testProductsPath "$TEST_PRODUCTS" \
             | exit_code=$?
 
           echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
 
           # Save .xcresult even in case of failure.
           ./GHAScripts/gh-tar "$(dirname "$BUILD_XCRESULT")" "$BUILD_XCRESULT"
+
+          if [ $exit_code == 0 ]; then
+            ./GHAScripts/gh-tar "$(dirname "$TEST_PRODUCTS")" "$TEST_PRODUCTS"
+          fi
 
       - name: Save build.xcresult
         uses: actions/upload-artifact@v3
@@ -189,12 +192,83 @@ jobs:
           if-no-files-found: error
           path: |
             ${{ env.BUILD_XCRESULT }}.tar
-    
+
       - name: Exit on build failure
         if: ${{ steps.build-for-testing.outputs.exit-code != '0' }}
         run: |
           exit ${{ steps.build-for-testing.outputs.exit-code }}
-    
+
+      - name: Save test products
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.TESTS_SCHEME }}.xctestproducts
+          if-no-files-found: error
+          path: |
+            ${{ env.TEST_PRODUCTS }}.tar  
+
+  tests:
+    name: Run ${{ inputs.testsName }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    needs: build
+
+    outputs:
+      tests-passed: ${{ steps.run-tests.outputs.tests-failed != 'true' && steps.run-tests.conclusion == 'success' }}
+
+    env:
+      RUN_STAMP: ${{ github.run_id }}.${{ github.run_attempt }}
+      TESTS_SCHEME: ${{ inputs.testsScheme }}
+      TESTS_NAME: ${{ inputs.testsName }}
+      TESTING_SNAPSHOTS: ${{ inputs.testsKind == 'Snapshots' }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Dump Environment
+        run: |
+          launchctl managername
+          automationmodetool
+          env | sort
+
+      - name: Setup Environment
+        run: |
+          tmpdir="$PWD/tmp"
+
+          DERIVED_DATA_PATH="$tmpdir/build.derivedData"
+          echo "DERIVED_DATA_PATH=$DERIVED_DATA_PATH" >> $GITHUB_ENV
+
+          XCRESULTS_DIRECTORY="$tmpdir/XCResults"
+          echo "XCRESULTS_DIRECTORY=$XCRESULTS_DIRECTORY" >> $GITHUB_ENV
+          mkdir -p "$XCRESULTS_DIRECTORY"
+
+          TEST_PRODUCTS_DIRECTORY="$tmpdir/TestProducts"
+          echo "TEST_PRODUCTS_DIRECTORY=$TEST_PRODUCTS_DIRECTORY" >> $GITHUB_ENV
+          mkdir -p "$TEST_PRODUCTS_DIRECTORY"
+
+          TEST_PRODUCTS="$TEST_PRODUCTS_DIRECTORY/${{ inputs.testsScheme }}.xctestproducts"
+          echo "TEST_PRODUCTS=$TEST_PRODUCTS" >> $GITHUB_ENV
+
+          echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
+          echo "RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_PRIVATE_KEY', inputs.testsKind) }}" >> $GITHUB_ENV
+          echo "RW_GHA_CHECK_APP_ID_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_APP_ID', inputs.testsKind) }}" >> $GITHUB_ENV
+          echo "UPDATED_SNAPSHOTS_BRANCH=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}-Updated-Snapshots-For-$TESTS_SCHEME" >> $GITHUB_ENV
+
+      - uses: maxim-lobanov/setup-xcode@v1.5.1
+        with:
+          xcode-version: 'latest'
+  
+      - name: Download test products
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.TESTS_SCHEME }}.xctestproducts
+          path: ${{ env.TEST_PRODUCTS_DIRECTORY }}
+      
+      - name: Unpack test products
+        run: |
+          tar xzf "$TEST_PRODUCTS".tar -C "$TEST_PRODUCTS_DIRECTORY"
+      
       - name: Run Tests
         id: run-tests
         run: |
@@ -213,7 +287,7 @@ jobs:
             -destination 'platform=macOS' \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -resultBundlePath "$TESTS_XCRESULT" \
-            -testProductsPath "$TEST_PRODUCTS_PATH" \
+            -testProductsPath "$TEST_PRODUCTS" \
             || exit_code=$?
           echo "::endgroup::"
 
