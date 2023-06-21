@@ -78,7 +78,7 @@ jobs:
           echo "REGENERATED_SNAPSHOTS_ARCHIVE=$RUNNER_TEMP/Regenerated-Snapshots.${{ env.RUN_STAMP }}.tar.gz" >> $GITHUB_ENV
           echo "RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_PRIVATE_KEY', inputs.testsKind) }}" >> $GITHUB_ENV
           echo "RW_GHA_CHECK_APP_ID_SECRET_NAME=${{ format('RW_GHA_CHECK_{0}_APP_ID', inputs.testsKind) }}" >> $GITHUB_ENV
-          echo "REGENERATED_SNAPSHOTS_BRANCH=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}-Regenerated-Snapshots-For-${{ inputs.testsScheme }}" >> $GITHUB_ENV
+          echo "UPDATED_SNAPSHOTS_BRANCH=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}-Updated-Snapshots-For-${{ inputs.testsScheme }}" >> $GITHUB_ENV
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
@@ -234,7 +234,7 @@ jobs:
                 echo 'set +x'
               fi
             }
-            regenerated() {
+            generated() {
               restore_x=$(save_x); set +x
               TESTS_SCHEME='${{ inputs.testsScheme }}' GHAShortcuts/ListSnapshots | while read file; do
                 if [ "$file" -nt "$stamp" ]; then
@@ -252,12 +252,12 @@ jobs:
               done
               $restore_x
             }
-            regenerated_count=$(regenerated | wc -l | sed 's/^ *//')
+            generated_count=$(generated | wc -l | sed 's/^ *//')
             obsolete_count=$(obsolete | wc -l | sed 's/^ *//')
-            echo "regenerated_count=$regenerated_count" >> $GITHUB_OUTPUT
+            echo "generated_count=$generated_count" >> $GITHUB_OUTPUT
             echo "obsolete_count=$obsolete_count" >> $GITHUB_OUTPUT
-            if [ "$regenerated_count" == 0 ]; then
-              echo "::error title=No snapshots were regenerated in ${{ inputs.testsScheme }}::There're no snapshots regenerated; something is likely wrong."
+            if [ "$generated_count" == 0 ]; then
+              echo "::error title=No snapshots were generated via ${{ inputs.testsScheme }}::There're no snapshots generated; something is likely wrong."
               echo "malfunction=true" >> $GITHUB_OUTPUT
               exit
             fi
@@ -265,14 +265,14 @@ jobs:
               echo "tests-failed=true" >> $GITHUB_OUTPUT # Treat obsolete snapshots as test failures.
             fi
             obsolete | tr '\n' '\0' | xargs -0 rm
-            regenerated | tr '\n' '\0' | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
+            generated | tr '\n' '\0' | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
           fi
 
       - name: Delete the previous version of snapshots branch
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
-          if git fetch origin ${{ env.REGENERATED_SNAPSHOTS_BRANCH }} 2>/dev/null; then
-            git push origin --delete ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}
+          if git fetch origin ${{ env.UPDATED_SNAPSHOTS_BRANCH }} 2>/dev/null; then
+            git push origin --delete ${{ env.UPDATED_SNAPSHOTS_BRANCH }}
           fi
 
       - name: Stash the snapshot changes, if exercising a PR
@@ -295,14 +295,14 @@ jobs:
         id: snapshot-branch
         if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
-          git checkout -b "$REGENERATED_SNAPSHOTS_BRANCH"
+          git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
-          if git commit -m "Regenerated snapshots via ${{ inputs.testsScheme }}."; then
+          if git commit -m "Updated snapshots via ${{ inputs.testsScheme }}."; then
             echo "committed=true" >> $GITHUB_OUTPUT
-            git push --force --set-upstream origin "$REGENERATED_SNAPSHOTS_BRANCH"
+            git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
           fi
 
-      - name: Add a note about regenerated snapshots branch (or lack of it)
+      - name: Add a note about updated snapshots branch (or lack of it)
         if: ${{ inputs.testsKind == 'Snapshots' }}
         run: |
           committed=${{ steps.snapshot-branch.outputs.committed }}
@@ -331,9 +331,9 @@ jobs:
               echo # Make it line-terminated
             }
             stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
-            echo "::error title=Snapshots in ${{ inputs.testsScheme }} are not up to date::Among ${{ steps.run-tests.outputs.regenerated_count }} regenerated snapshots: $stats. Changes are pushed to ${{ env.REGENERATED_SNAPSHOTS_BRANCH }}."
+            echo "::error title=Snapshots in ${{ inputs.testsScheme }} are not up to date::Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to ${{ env.UPDATED_SNAPSHOTS_BRANCH }}."
           else
-            echo "::error title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.regenerated_count }} snashots were regenerated without a change."
+            echo "::error title=No changes in ${{ inputs.testsScheme }}::${{ steps.run-tests.outputs.generated_count }} snashots were regenerated without a change."
           fi
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
