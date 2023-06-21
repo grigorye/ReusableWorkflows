@@ -61,12 +61,12 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Dump Environment
+      - name: Dump environment
         run: |
           env | sort
           git --no-pager log -10 --pretty=format:"%h %ad %an %s"
 
-      - name: Setup Environment
+      - name: Setup environment
         run: |
           tmpdir="$PWD/tmp"
 
@@ -88,12 +88,12 @@ jobs:
         with:
           xcode-version: 'latest'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           ./GHAShortcuts/InstallDependencies
           ./GHAShortcuts/InstallDependencies-tests
 
-      - name: Cache Mint packages
+      - name: Cache mint packages
         id: mint-cache
         uses: actions/cache@v3
         with:
@@ -101,11 +101,11 @@ jobs:
           key: ${{ runner.os }}-${{ runner.temp }}-mint-${{ hashFiles('**/Mintfile') }}
           restore-keys: ${{ runner.os }}-${{ runner.temp }}-mint-
 
-      - name: Install Mint packages
+      - name: Install mint packages
         if: steps.mint-cache.outputs.cache-hit != 'true'
         run: mint bootstrap
 
-      - name: Create Keychain
+      - name: Create keychain
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
@@ -158,7 +158,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Generate Project
+      - name: Generate project
         run: |
           ./Commands/GenerateProject "$PROJECT_KIND"
 
@@ -226,13 +226,13 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Dump Environment
+      - name: Dump environment
         run: |
           launchctl managername
           automationmodetool
           env | sort
 
-      - name: Setup Environment
+      - name: Setup environment
         run: |
           tmpdir="$PWD/tmp"
 
@@ -269,7 +269,7 @@ jobs:
         run: |
           tar xzf "$TEST_PRODUCTS".tar -C "$TEST_PRODUCTS_DIRECTORY"
       
-      - name: Run Tests
+      - name: Run tests
         id: run-tests
         run: |
           TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/"$TESTS_SCHEME"-tests.xcresult
@@ -372,7 +372,7 @@ jobs:
         run: |
           git stash pop
 
-      - name: Create Branch for Snapshots
+      - name: Create branch with updated snapshots
         id: snapshot-branch
         if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
@@ -383,7 +383,7 @@ jobs:
             git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
           fi
 
-      - name: Add a note about updated snapshots branch (or lack of it)
+      - name: Add a note about branch with updated snapshots (or lack of it)
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
           committed=${{ steps.snapshot-branch.outputs.committed }}
@@ -418,7 +418,7 @@ jobs:
           fi
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
-      - name: Retrieve Token For Generating Test Results
+      - name: Retrieve token for generating test results
         if: ${{ false }}
         id: gha_check_app_token
         uses: tibdex/github-app-token@v1.8.0
@@ -428,7 +428,7 @@ jobs:
           app_id: ${{ secrets[env.RW_GHA_CHECK_APP_ID_SECRET_NAME] }}
           private_key: ${{ secrets[env.RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME] }}
 
-      - name: Check Test Results
+      - name: Check test results
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.TESTS_XCRESULT }}
@@ -437,12 +437,12 @@ jobs:
           show-passed-tests: false
           # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
 
-      - name: Exit on Tests Malfunction
+      - name: Exit on tests malfunction
         if: ${{ steps.run-tests.outputs.malfunction == 'true' }}
         run: |
           exit ${{ steps.run-tests.outputs.exit-code }}
 
-      - name: Save .xcresult
+      - name: Save tests.xcresult
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TESTS_SCHEME }}-tests-xcresult
@@ -450,7 +450,7 @@ jobs:
           path: |
             ${{ env.TESTS_XCRESULT }}.tar
 
-      - name: Save Regenerated Snapshots
+      - name: Save regenerated snapshots
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         uses: actions/upload-artifact@v3
         with:
