@@ -46,7 +46,7 @@ defaults:
 jobs:
   tests:
     name: Run ${{ inputs.testsName }}
-    runs-on: ${{ fromJSON(inputs.runs-on) }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}    
 
     outputs:
       tests-passed: ${{ steps.run-tests.outputs.tests-failed != 'true' && steps.run-tests.conclusion == 'success' }}
@@ -57,6 +57,8 @@ jobs:
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       KEYCHAIN_NAME: app-signing.keychain-db
       TESTS_SCHEME: ${{ inputs.testsScheme }}
+      TESTS_NAME: ${{ inputs.testsName }}
+      TESTING_SNAPSHOTS: ${{ inputs.testsKind == 'Snapshots' }}
 
     steps:
       - uses: actions/checkout@v2
@@ -196,7 +198,7 @@ jobs:
           TESTS_XCRESULT="$XCRESULTS_DIRECTORY"/"$TESTS_SCHEME"-tests.xcresult
           echo "TESTS_XCRESULT=$TESTS_XCRESULT" >> $GITHUB_ENV
 
-          if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
+          if $TESTING_SNAPSHOTS; then
             stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
             export TEST_RUNNER_SNAPSHOT_RECORDING=YES # Should have effect on RunTests
             export TEST_RUNNER_SNAPSHOT_SKIP_DIFF_MESSAGE=YES # Make failure reports less verbose.
@@ -224,10 +226,10 @@ jobs:
 
           if [ "$exit_code" == "65" ]; then
             echo "tests-failed=true" >> $GITHUB_OUTPUT
-            echo "::error title=$TESTS_SCHEME did fail::See ${{ inputs.testsName }} Results for more info."
+            echo "::error title=$TESTS_SCHEME did fail::See ${{ env.TESTS_NAME }} Results for more info."
           fi
 
-          if [ "${{ inputs.testsKind }}" == "Snapshots" ]; then
+          if $TESTING_SNAPSHOTS; then
             save_x() {
               if [[ $- = *x* ]]; then
                 echo 'set -x'
@@ -270,31 +272,31 @@ jobs:
           fi
 
       - name: Delete the previous version of snapshots branch
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
           if git fetch origin ${{ env.UPDATED_SNAPSHOTS_BRANCH }} 2>/dev/null; then
             git push origin --delete ${{ env.UPDATED_SNAPSHOTS_BRANCH }}
           fi
 
       - name: Stash the snapshot changes, if exercising a PR
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash
 
       - name: Prepare for creation of regenerated snapshot branch, if exercising a PR
         uses: actions/checkout@v3
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Unstash the snapshot changes, if exercising a PR
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash pop
 
       - name: Create Branch for Snapshots
         id: snapshot-branch
-        if: ${{ inputs.testsKind == 'Snapshots' && steps.run-tests.outputs.malfunction != 'true' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' }}
         run: |
           git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
@@ -304,7 +306,7 @@ jobs:
           fi
 
       - name: Add a note about updated snapshots branch (or lack of it)
-        if: ${{ inputs.testsKind == 'Snapshots' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
           committed=${{ steps.snapshot-branch.outputs.committed }}
           if [ "$committed" == 'true' ]
@@ -352,7 +354,7 @@ jobs:
         uses: kishikawakatsumi/xcresulttool@v1.7.1
         with:
           path: ${{ env.TESTS_XCRESULT }}
-          title: "${{ inputs.testsName }} Results"
+          title: "${{ env.TESTS_NAME }} Results"
           upload-bundles: never
           show-passed-tests: false
           # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
@@ -371,7 +373,7 @@ jobs:
             ${{ env.TESTS_XCRESULT }}.tar
 
       - name: Save Regenerated Snapshots
-        if: ${{ inputs.testsKind == 'Snapshots' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TESTS_SCHEME }}-Regenerated
