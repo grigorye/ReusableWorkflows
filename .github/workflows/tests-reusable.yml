@@ -185,7 +185,7 @@ jobs:
             ./GHAScripts/gh-tar "$(dirname "$TEST_PRODUCTS")" "$TEST_PRODUCTS"
           fi
 
-      - name: Save build.xcresult
+      - name: Save build results
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TESTS_SCHEME }}-build-xcresult
@@ -442,7 +442,7 @@ jobs:
         run: |
           exit ${{ steps.run-tests.outputs.exit-code }}
 
-      - name: Save tests.xcresult
+      - name: Save test results
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TESTS_SCHEME }}-tests-xcresult
