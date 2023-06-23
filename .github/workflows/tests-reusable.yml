@@ -383,13 +383,17 @@ jobs:
         run: |
           git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
-          # Set author/committer from the last commit.
-          user_name=$(git log -1 --pretty=format:'%an')
-          user_email=$(git log -1 --pretty=format:'%ae')
-          if git commit -m "Updated snapshots via $TESTS_SCHEME." -c "user.name=$user_name" -c "user.email=$user_email"; then
-            echo "committed=true" >> $GITHUB_OUTPUT
-            git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
+          if [ "$(git status -s *.png)" == "" ]; then
+            exit 0 # Nothing to commit.
           fi
+          # Set author/committer from the last commit.
+          GIT_USER_NAME=$(git log -1 --pretty=format:'%an')
+          export GIT_USER_NAME
+          GIT_USER_EMAIL=$(git log -1 --pretty=format:'%ae')
+          export GIT_USER_EMAIL
+          git commit -m "Updated snapshots via $TESTS_SCHEME." *.png
+          echo "committed=true" >> $GITHUB_OUTPUT
+          git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
 
       - name: Add a note about branch with updated snapshots (or lack of it)
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
