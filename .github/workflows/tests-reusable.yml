@@ -396,6 +396,7 @@ jobs:
           git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
 
       - name: Add a note about branch with updated snapshots (or lack of it)
+        id: snapshot-note
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
           committed=${{ steps.snapshot-branch.outputs.committed }}
@@ -430,6 +431,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats." >> $GITHUB_STEP_SUMMARY
             echo "The changes were pushed to $branch_link." >> $GITHUB_STEP_SUMMARY
+            echo "failure-info=Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to $UPDATED_SNAPSHOTS_BRANCH" >> $GITHUB_OUTPUT
           else
             echo "# No changes in snapshots."
             echo "${{ steps.run-tests.outputs.generated_count }} snashots were regenerated without a change." >> $GITHUB_STEP_SUMMARY
@@ -476,3 +478,10 @@ jobs:
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
+
+      - name: Report snapshots failure, if any
+        if: ${{ steps.snapshot-note.outputs.failure-info != '' }}
+        run: |
+          set +x
+          echo "::error title=Snapshots were regenerated with changes::${{ steps.snapshot-note.outputs.failure-info }}"
+          exit 1
