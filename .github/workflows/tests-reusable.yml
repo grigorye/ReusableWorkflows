@@ -481,7 +481,8 @@ jobs:
 
       - name: Report snapshots failure, if any
         if: ${{ steps.snapshot-note.outputs.failure-info != '' }}
-        run: |
-          set +x
-          echo "::error title=Snapshots were regenerated with changes::${{ steps.snapshot-note.outputs.failure-info }}"
-          exit 1
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Snapshots were regenerated with changes. ${{ steps.snapshot-note.outputs.failure-info }}.')
+  
