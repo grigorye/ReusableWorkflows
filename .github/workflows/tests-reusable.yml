@@ -383,8 +383,10 @@ jobs:
         run: |
           git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
-          author="github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
-          if git commit -m "Updated snapshots via $TESTS_SCHEME." --author="$author"; then
+          # Set author/committer from the last commit.
+          user_name=$(git log -1 --pretty=format:'%an')
+          user_email=$(git log -1 --pretty=format:'%ae')
+          if git commit -m "Updated snapshots via $TESTS_SCHEME." -c "user.name=$user_name" -c "user.email=$user_email"; then
             echo "committed=true" >> $GITHUB_OUTPUT
             git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
           fi
