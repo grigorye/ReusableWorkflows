@@ -264,12 +264,6 @@ jobs:
         with:
           xcode-version: 'latest'
   
-      - name: Download test products
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.TESTS_SCHEME }}.xctestproducts
-          path: ${{ env.TEST_PRODUCTS_DIRECTORY }}
-      
       - name: Install dependencies
         run: |
           ./GHAShortcuts/InstallDependencies
@@ -287,6 +281,16 @@ jobs:
         if: steps.mint-cache.outputs.cache-hit != 'true'
         run: mint bootstrap
   
+      - name: Download test products
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.TESTS_SCHEME }}.xctestproducts
+          path: ${{ env.TEST_PRODUCTS_DIRECTORY }}      
+
+      - name: Unpack test products
+        run: |
+          tar xzf "$TEST_PRODUCTS".tar -C "$TEST_PRODUCTS_DIRECTORY"
+      
       - name: Get SRCROOT for snapshots testing
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
@@ -295,10 +299,6 @@ jobs:
           [ "$SRCROOT" != "" ] || exit 1 # Sanity check.
           echo "SRCROOT=$SRCROOT" >> $GITHUB_ENV
 
-      - name: Unpack test products
-        run: |
-          tar xzf "$TEST_PRODUCTS".tar -C "$TEST_PRODUCTS_DIRECTORY"
-      
       - name: Run tests
         id: run-tests
         run: |
