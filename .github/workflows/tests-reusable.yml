@@ -270,6 +270,14 @@ jobs:
           name: ${{ env.TESTS_SCHEME }}.xctestproducts
           path: ${{ env.TEST_PRODUCTS_DIRECTORY }}
       
+      - name: Get SRCROOT for snapshots testing
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
+        run: |
+          ./Commands/GenerateProject "$PROJECT_KIND"
+          SRCROOT=$(./GHAShortcuts/Xcodebuild -showBuildSettings | sed -n 's/^ *SRCROOT = \(.*\)$/\1/p')
+          [ "$SRCROOT" != "" ] || exit 1 # Sanity check.
+          echo "SRCROOT=$SRCROOT" >> $GITHUB_ENV
+
       - name: Unpack test products
         run: |
           tar xzf "$TEST_PRODUCTS".tar -C "$TEST_PRODUCTS_DIRECTORY"
@@ -284,6 +292,7 @@ jobs:
             stamp=$(mktemp /tmp/RegenerateSnapshots.XXXXXX)
             export TEST_RUNNER_SNAPSHOT_RECORDING=YES # Should have effect on RunTests
             export TEST_RUNNER_SNAPSHOT_SKIP_DIFF_MESSAGE=YES # Make failure reports less verbose.
+            export TEST_RUNNER_SRCROOT="$SRCROOT"
           fi
 
           echo "::group::Run xcodebuild test"
