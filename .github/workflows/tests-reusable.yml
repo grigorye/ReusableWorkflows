@@ -383,7 +383,7 @@ jobs:
         run: |
           git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
-          if [ "$(git status -s *.png)" == "" ]; then
+          if ! git status --porcelain *.png | grep .; then
             exit 0 # Nothing to commit.
           fi
           # Set author/committer from the last commit.
