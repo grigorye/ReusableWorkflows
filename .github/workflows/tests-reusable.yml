@@ -498,7 +498,7 @@ jobs:
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.TESTS_SCHEME }}-Regenerated
+          name: ${{ env.TESTS_SCHEME }}-regenerated
           if-no-files-found: error
           path: |
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
