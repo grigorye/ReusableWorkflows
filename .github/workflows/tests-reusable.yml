@@ -508,5 +508,5 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Snapshots were regenerated with changes. ${{ steps.snapshot-note.outputs.failure-info }}.')
+            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} were regenerated with changes. ${{ steps.snapshot-note.outputs.failure-info }}.')
   
