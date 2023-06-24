@@ -270,6 +270,23 @@ jobs:
           name: ${{ env.TESTS_SCHEME }}.xctestproducts
           path: ${{ env.TEST_PRODUCTS_DIRECTORY }}
       
+      - name: Install dependencies
+        run: |
+          ./GHAShortcuts/InstallDependencies
+          ./GHAShortcuts/InstallDependencies-tests
+
+      - name: Cache mint packages
+        id: mint-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.mint
+          key: ${{ runner.os }}-${{ runner.temp }}-mint-${{ hashFiles('**/Mintfile') }}
+          restore-keys: ${{ runner.os }}-${{ runner.temp }}-mint-
+
+      - name: Install mint packages
+        if: steps.mint-cache.outputs.cache-hit != 'true'
+        run: mint bootstrap
+  
       - name: Get SRCROOT for snapshots testing
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
