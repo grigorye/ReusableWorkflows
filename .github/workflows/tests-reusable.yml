@@ -180,7 +180,6 @@ jobs:
             || pipestatus=("${PIPESTATUS[@]}")
           [ "${pipestatus[1]}" == 0 ]
           exit_code="${pipestatus[0]}"
-          echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
 
           # Save .xcresult even in case of failure.
           ./GHAScripts/gh-tar "$(dirname "$BUILD_XCRESULT")" "$BUILD_XCRESULT"
@@ -189,18 +188,16 @@ jobs:
             ./GHAScripts/gh-tar "$(dirname "$TEST_PRODUCTS")" "$TEST_PRODUCTS"
           fi
 
+          exit "$exit_code"
+
       - name: Save build results
+        if: ${{ always() && steps.build-for-testing.conclusion != 'skipped' }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TESTS_SCHEME }}-build-xcresult
           if-no-files-found: error
           path: |
             ${{ env.BUILD_XCRESULT }}.tar
-
-      - name: Exit on build failure
-        if: ${{ steps.build-for-testing.outputs.exit-code != '0' }}
-        run: |
-          exit ${{ steps.build-for-testing.outputs.exit-code }}
 
       - name: Save test products
         uses: actions/upload-artifact@v3
