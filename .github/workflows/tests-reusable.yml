@@ -43,6 +43,9 @@ defaults:
   run:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
+env:
+  PROJECT_KIND: 'DeveloperID'
+
 jobs:
 
   build:
@@ -50,7 +53,6 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runs-on) }}
 
     env:
-      PROJECT_KIND: 'DeveloperID'
       KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       KEYCHAIN_NAME: app-signing.keychain-db
       TESTS_SCHEME: ${{ inputs.testsScheme }}
