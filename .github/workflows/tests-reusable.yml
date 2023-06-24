@@ -171,17 +171,14 @@ jobs:
           echo "BUILD_XCRESULT=$BUILD_XCRESULT" >> $GITHUB_ENV
 
           . ./Commands/Xcodebuild-env.sh
-          pipestatus=(0 0)
+          exit_code=0
           ./ReusableWorkflows/GHAScripts/XcodebuildBuildForTesting \
+            -quiet \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -scheme "$TESTS_SCHEME" \
             -resultBundlePath "$BUILD_XCRESULT" \
             -testProductsPath "$TEST_PRODUCTS" \
-            2>&1 \
-            | xcpretty \
-            || pipestatus=("${PIPESTATUS[@]}")
-          [ "${pipestatus[1]}" == 0 ]
-          exit_code="${pipestatus[0]}"
+            || exit_code=$?
 
           # Save .xcresult even in case of failure.
           ./GHAScripts/gh-tar "$(dirname "$BUILD_XCRESULT")" "$BUILD_XCRESULT"
