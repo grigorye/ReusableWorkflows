@@ -174,7 +174,7 @@ jobs:
             -scheme "$TESTS_SCHEME" \
             -resultBundlePath "$BUILD_XCRESULT" \
             -testProductsPath "$TEST_PRODUCTS" \
-            | exit_code=$?
+            || exit_code=$?
 
           echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
 
