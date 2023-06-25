@@ -10,7 +10,10 @@ on:
       ios-app-scheme:
         type: string
         required: false
-
+      runs-on:
+        type: string
+        required: true
+  
 jobs:
   increasing-number:
     name: 'Increasing number'
@@ -24,4 +27,5 @@ jobs:
       build-configs: ${{ inputs.build-configs }}
       macos-app-scheme: ${{ inputs.macos-app-scheme }}
       ios-app-scheme: ${{ inputs.ios-app-scheme }}
+      runs-on: "['${{ inputs.runs-on }}', 'build']"
     secrets: inherit

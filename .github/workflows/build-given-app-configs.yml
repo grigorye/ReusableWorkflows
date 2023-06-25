@@ -14,7 +14,10 @@ on:
       ios-app-scheme:
         type: string
         required: false
-
+      runs-on:
+        type: string
+        required: true
+  
 defaults:
   run:
     shell: bash --noprofile --norc -x -euo pipefail {0}
@@ -116,4 +119,5 @@ jobs:
       exportOptionsPlist: ${{ matrix.build-config.exportOptionsPlist }}
       increasingNumber: ${{ inputs.increasing-number }}
       jobName: ${{ matrix.build-config.name }}
+      runs-on: ${{ inputs.runs-on }}
     secrets: inherit
