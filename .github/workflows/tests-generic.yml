@@ -26,7 +26,7 @@ defaults:
 jobs:
   unit-tests:
     name: 'Unit Tests'
-    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
+    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v21
     secrets: inherit
     with:
       runs-on: "['${{ inputs.runs-on }}', 'build']"
@@ -37,7 +37,7 @@ jobs:
   snapshot-tests:
     name: 'Snapshots'
     if: inputs.snapshot-tests-scheme != ''
-    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
+    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v21
     secrets: inherit
     with:
       runs-on: "['${{ inputs.runs-on }}', 'snapshots']"
@@ -48,7 +48,7 @@ jobs:
   ui-snapshot-tests:
     name: 'UI Test Snapshots'
     if: inputs.ui-snapshot-tests-scheme != ''
-    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v20
+    uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v21
     secrets: inherit
     with:
       runs-on: "['${{ inputs.runs-on }}', 'ui-automation']"
