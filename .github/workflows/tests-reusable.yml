@@ -70,7 +70,11 @@ jobs:
 
       - name: Setup environment
         run: |
-          tmpdir="$PWD/tmp"
+          if [ "${RUNNER_DEBUG:-}" == "1" ]; then
+            tmpdir="$HOME/runner-temp/$GITHUB_RUN_ID"
+          else
+            tmpdir="$RUNNER_TEMP"
+          fi
 
           DERIVED_DATA_PATH="$tmpdir/build.derivedData"
           echo "DERIVED_DATA_PATH=$DERIVED_DATA_PATH" >> $GITHUB_ENV
