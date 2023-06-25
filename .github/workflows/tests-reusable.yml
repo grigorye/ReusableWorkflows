@@ -328,9 +328,8 @@ jobs:
           echo "exit-code=$exit_code" >> "$GITHUB_OUTPUT"
 
           if [ "$exit_code" -ne 65 ] && [ "$exit_code" -ne 0 ]; then
-            echo "malfunction=true" >> $GITHUB_OUTPUT
-            echo "exit-code=$exit_code" >> $GITHUB_OUTPUT
-            exit
+            echo "::error title=Tests could not be run in $TESTS_SCHEME::Exit code: $exit_code."
+            exit "$exit_code"
           fi
 
           if [ "$exit_code" == "65" ]; then
@@ -369,8 +368,7 @@ jobs:
             echo "generated_count=$generated_count" >> $GITHUB_OUTPUT
             echo "obsolete_count=$obsolete_count" >> $GITHUB_OUTPUT
             if [ "$generated_count" == 0 ]; then
-              echo "::error title=No snapshots were generated via $TESTS_SCHEME::There're no snapshots generated; something is likely wrong."
-              echo "malfunction=true" >> $GITHUB_OUTPUT
+              echo "snapshots-malfunction-info=There're no snapshots generated; something is very likely wrong. Snapshots processing will be aborted." >> $GITHUB_OUTPUT
               exit
             fi
             if [ "$obsolete_count" -gt 0 ]; then
@@ -386,8 +384,32 @@ jobs:
             fi
           fi
 
+      - name: Check test results
+        uses: kishikawakatsumi/xcresulttool@v1.7.1
+        with:
+          path: ${{ env.TESTS_XCRESULT }}
+          title: "${{ env.TESTS_NAME }} Results"
+          upload-bundles: never
+          show-passed-tests: false
+          # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
+
+      - name: Save test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.TESTS_SCHEME }}-tests-xcresult
+          if-no-files-found: error
+          path: |
+            ${{ env.TESTS_XCRESULT }}.tar
+  
+      - name: Exit on snapshots malfunction
+        if: ${{ steps.run-tests.outputs.snapshots-malfunction-info != '' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} malfunctioned. ${{ steps.run-tests.outputs.snapshots-malfunction-info }}')
+      
       - name: Delete the previous version of snapshots branch
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         run: |
           if git fetch origin "$UPDATED_SNAPSHOTS_BRANCH" 2>/dev/null; then
             git push origin --delete "$UPDATED_SNAPSHOTS_BRANCH"
@@ -455,7 +477,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats." >> $GITHUB_STEP_SUMMARY
           echo "The changes were pushed to $branch_link." >> $GITHUB_STEP_SUMMARY
-          echo "failure-info=Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to $UPDATED_SNAPSHOTS_BRANCH" >> $GITHUB_OUTPUT
+          echo "failure-info=Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to $UPDATED_SNAPSHOTS_BRANCH." >> $GITHUB_OUTPUT
       
       - name: Add a note about *no* changes in snapshots
         if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'false'}}
@@ -473,28 +495,6 @@ jobs:
           app_id: ${{ secrets[env.RW_GHA_CHECK_APP_ID_SECRET_NAME] }}
           private_key: ${{ secrets[env.RW_GHA_CHECK_PRIVATE_KEY_SECRET_NAME] }}
 
-      - name: Check test results
-        uses: kishikawakatsumi/xcresulttool@v1.7.1
-        with:
-          path: ${{ env.TESTS_XCRESULT }}
-          title: "${{ env.TESTS_NAME }} Results"
-          upload-bundles: never
-          show-passed-tests: false
-          # token: ${{ steps.gha_check_app_token.outputs.token }} # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
-
-      - name: Exit on tests malfunction
-        if: ${{ steps.run-tests.outputs.malfunction == 'true' }}
-        run: |
-          exit ${{ steps.run-tests.outputs.exit-code }}
-
-      - name: Save test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.TESTS_SCHEME }}-tests-xcresult
-          if-no-files-found: error
-          path: |
-            ${{ env.TESTS_XCRESULT }}.tar
-
       - name: Save regenerated snapshots
         if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
         uses: actions/upload-artifact@v3
@@ -509,5 +509,5 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} were regenerated with changes. ${{ steps.snapshot-changes-note.outputs.failure-info }}.')
+            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} were regenerated with changes. ${{ steps.snapshot-changes-note.outputs.failure-info }}')
   
