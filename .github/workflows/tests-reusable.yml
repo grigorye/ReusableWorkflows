@@ -440,7 +440,7 @@ jobs:
           # Set author/committer from the last commit.
           user_name=$(git log -1 --pretty=format:'%an')
           user_email=$(git log -1 --pretty=format:'%ae')
-          git -c "user.name=$user_name" -c "user.email=$user_email" commit -m "Updated snapshots via $TESTS_SCHEME." *.png
+          git commit --author "$user_name <$user_email>" -m "Updated snapshots via $TESTS_SCHEME." *.png
           echo "committed=true" >> $GITHUB_OUTPUT
           git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
 
