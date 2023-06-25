@@ -378,6 +378,12 @@ jobs:
             fi
             obsolete | tr '\n' '\0' | xargs -0 rm
             generated | tr '\n' '\0' | xargs -0 tar czf "$REGENERATED_SNAPSHOTS_ARCHIVE"
+
+            if git status --porcelain *.png | grep .; then
+              echo "snapshots-changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "snapshots-changed=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Delete the previous version of snapshots branch
@@ -388,30 +394,27 @@ jobs:
           fi
 
       - name: Stash the snapshot changes, if exercising a PR
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash
 
       - name: Prepare for creation of regenerated snapshot branch, if exercising a PR
         uses: actions/checkout@v3
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'true' && github.event_name == 'pull_request' }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Unstash the snapshot changes, if exercising a PR
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' && github.event_name == 'pull_request' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'true' && github.event_name == 'pull_request' }}
         run: |
           git stash pop
 
       - name: Create branch with updated snapshots
         id: snapshot-branch
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.malfunction != 'true' }}
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'true' }}
         run: |
           git checkout -b "$UPDATED_SNAPSHOTS_BRANCH"
           git add *.png
-          if ! git status --porcelain *.png | grep .; then
-            exit 0 # Nothing to commit.
-          fi
           # Set author/committer from the last commit.
           user_name=$(git log -1 --pretty=format:'%an')
           user_email=$(git log -1 --pretty=format:'%ae')
@@ -419,47 +422,45 @@ jobs:
           echo "committed=true" >> $GITHUB_OUTPUT
           git push --force --set-upstream origin "$UPDATED_SNAPSHOTS_BRANCH"
 
-      - name: Add a note about branch with updated snapshots (or lack of it)
-        id: snapshot-note
-        if: ${{ env.TESTING_SNAPSHOTS == 'true' }}
+      - name: Add a note about changes in snapshots
+        id: snapshot-changes-note
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'true'}}
         run: |
-          committed=${{ steps.snapshot-branch.outputs.committed }}
-          if [ "$committed" == 'true' ]
-          then
-            verbalize_git_name_status() {
-              #
-              # Turns something like this:
-              # ```
-              # M    foo
-              # D    bar
-              # M    baz
-              # ```
-              # Into this: `1 deleted, 2 modified`
-              #
+          verbalize_git_name_status() {
+            #
+            # Turns something like this:
+            # ```
+            # M    foo
+            # D    bar
+            # M    baz
+            # ```
+            # Into this: `1 deleted, 2 modified`
+            #
 
-              cut -f 1 `# cut first letter` |
-                sort `# prepare for uniq` |
-                sed -e 's/^A$/added/' -e 's/M/modified/' -e 's/D/deleted/' `# M -> modified, etc.` |
-                uniq -c `# count and compress them` |
-                sed 's/^ *//' `# drop initial spacing enforced by uniq` |
-                sed 's/$/,/' `# add comma to the end of line` |
-                tr '\n' ' ' `# join lines` |
-                sed 's/, $//' `# drop last comma and space`
+            cut -f 1 `# cut first letter` |
+              sort `# prepare for uniq` |
+              sed -e 's/^A$/added/' -e 's/M/modified/' -e 's/D/deleted/' `# M -> modified, etc.` |
+              uniq -c `# count and compress them` |
+              sed 's/^ *//' `# drop initial spacing enforced by uniq` |
+              sed 's/$/,/' `# add comma to the end of line` |
+              tr '\n' ' ' `# join lines` |
+              sed 's/, $//' `# drop last comma and space`
+        
+            echo # Make it line-terminated
+          }
+          stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
+          branch_link="[$UPDATED_SNAPSHOTS_BRANCH](/$GITHUB_REPOSITORY/compare/$CURRENT_BRANCH..$UPDATED_SNAPSHOTS_BRANCH)"
           
-              echo # Make it line-terminated
-            }
-            stats=$(git diff HEAD^..HEAD --name-status | verbalize_git_name_status)
-            branch_link="[$UPDATED_SNAPSHOTS_BRANCH](/$GITHUB_REPOSITORY/compare/$CURRENT_BRANCH..$UPDATED_SNAPSHOTS_BRANCH)"
-            
-            echo "# Snapshots changes discovered via $TESTS_SCHEME" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats." >> $GITHUB_STEP_SUMMARY
-            echo "The changes were pushed to $branch_link." >> $GITHUB_STEP_SUMMARY
-            echo "failure-info=Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to $UPDATED_SNAPSHOTS_BRANCH" >> $GITHUB_OUTPUT
-          else
-            echo "# No changes in snapshots."
-            echo "${{ steps.run-tests.outputs.generated_count }} snashots were regenerated without a change." >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "# Snapshots changes discovered via $TESTS_SCHEME" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats." >> $GITHUB_STEP_SUMMARY
+          echo "The changes were pushed to $branch_link." >> $GITHUB_STEP_SUMMARY
+          echo "failure-info=Among ${{ steps.run-tests.outputs.generated_count }} generated snapshots: $stats. Changes are pushed to $UPDATED_SNAPSHOTS_BRANCH" >> $GITHUB_OUTPUT
+      
+      - name: Add a note about *no* changes in snapshots
+        if: ${{ env.TESTING_SNAPSHOTS == 'true' && steps.run-tests.outputs.snapshots-changed == 'false'}}
+        run: |
+          echo "${{ steps.run-tests.outputs.generated_count }} snapshots were regenerated without a change." >> $GITHUB_STEP_SUMMARY
   
       # https://github.com/orgs/community/discussions/24616#discussioncomment-5607870
       - name: Retrieve token for generating test results
@@ -504,9 +505,9 @@ jobs:
             ${{ env.REGENERATED_SNAPSHOTS_ARCHIVE }}
 
       - name: Report snapshots failure, if any
-        if: ${{ steps.snapshot-note.outputs.failure-info != '' }}
+        if: ${{ steps.snapshot-changes-note.outputs.failure-info != '' }}
         uses: actions/github-script@v6
         with:
           script: |
-            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} were regenerated with changes. ${{ steps.snapshot-note.outputs.failure-info }}.')
+            core.setFailed('Snapshots in ${{ env.TESTS_SCHEME }} were regenerated with changes. ${{ steps.snapshot-changes-note.outputs.failure-info }}.')
   
