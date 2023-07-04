@@ -27,5 +27,5 @@ jobs:
       build-configs: ${{ inputs.build-configs }}
       macos-app-scheme: ${{ inputs.macos-app-scheme }}
       ios-app-scheme: ${{ inputs.ios-app-scheme }}
-      runs-on: "['${{ inputs.runs-on }}', 'build']"
+      runs-on: ${{ inputs.runs-on }}
     secrets: inherit
