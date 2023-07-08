@@ -6,6 +6,10 @@ on:
       unit-tests-scheme:
         type: string
         required: false
+      unit-tests-xcodebuild-extra-args-json:
+        required: false
+        type: string
+        default: '[]'
       snapshot-tests-scheme:
         type: string
         required: false
@@ -33,6 +37,7 @@ jobs:
       testsScheme: ${{ inputs.unit-tests-scheme }}
       testsKind: 'UnitTests'
       testsName: 'Unit Tests'
+      xcodebuild-extra-args-json: ${{ inputs.unit-tests-xcodebuild-extra-args-json }}
 
   snapshot-tests:
     name: 'Snapshots'

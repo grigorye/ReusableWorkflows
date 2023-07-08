@@ -17,6 +17,10 @@ on:
       testsName:
         required: true
         type: string # 'Unit Tests', 'Snapshots' or whatever
+      xcodebuild-extra-args-json:
+        required: false
+        type: string
+        default: '[]'
     outputs:
       tests-passed:
         description: "Tests passed"
@@ -174,12 +178,18 @@ jobs:
           BUILD_XCRESULT="$XCRESULTS_DIRECTORY"/"$TESTS_SCHEME"-build.xcresult
           echo "BUILD_XCRESULT=$BUILD_XCRESULT" >> $GITHUB_ENV
 
+          xcodebuild_extras=()
+          while IFS='' read -r extra; do
+            xcodebuild_extras+=("$extra")
+          done < <(echo '${{ inputs.xcodebuild-extra-args-json }}' | jq -rc '.[]')
+
           . ./Commands/Xcodebuild-env.sh
           exit_code=0
           ./ReusableWorkflows/GHAScripts/XcodebuildBuildForTesting \
+            -scheme "$TESTS_SCHEME" \
+            ${xcodebuild_extras:+"${xcodebuild_extras[@]}"} \
             -quiet \
             -derivedDataPath "$DERIVED_DATA_PATH" \
-            -scheme "$TESTS_SCHEME" \
             -resultBundlePath "$BUILD_XCRESULT" \
             -testProductsPath "$TEST_PRODUCTS" \
             || exit_code=$?
@@ -316,10 +326,15 @@ jobs:
             export TEST_RUNNER_SRCROOT="$SRCROOT"
           fi
 
+          xcodebuild_extras=()
+          while IFS='' read -r extra; do
+            xcodebuild_extras+=("$extra")
+          done < <(echo '${{ inputs.xcodebuild-extra-args-json }}' | jq -rc '.[]')
+
           echo "::group::Run xcodebuild test"
           exit_code=0
           ./ReusableWorkflows/GHAScripts/XcodebuildTestWithoutBuilding \
-            -destination 'platform=macOS' \
+            ${xcodebuild_extras:+"${xcodebuild_extras[@]}"} \
             -derivedDataPath "$DERIVED_DATA_PATH" \
             -resultBundlePath "$TESTS_XCRESULT" \
             -testProductsPath "$TEST_PRODUCTS" \
