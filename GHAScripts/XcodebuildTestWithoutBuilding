@@ -7,7 +7,7 @@ set -euo pipefail
 
 testExitCode=0
 
-xcodebuild \
+time xcodebuild \
     test-without-building \
     -disableAutomaticPackageResolution \
     "$@" |
