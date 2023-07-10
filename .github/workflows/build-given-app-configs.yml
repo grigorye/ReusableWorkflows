@@ -7,7 +7,7 @@ on:
       build-configs:
         type: string
         required: false
-        default: "['ios', 'app-store', 'developer-id']"
+        default: '["ios", "app-store", "developer-id"]'
       macos-app-scheme:
         type: string
         required: false
@@ -58,7 +58,7 @@ jobs:
       - name: Resolve build configs
         id: resolve-build-configs
         run: |
-          build_configs="${{ inputs.build-configs }}"
+          build_configs='${{ inputs.build-configs }}'
           if [ "${build_configs:-}" == "" ]; then
             echo "build-app-store=true" >> $GITHUB_OUTPUT
             echo "build-developer-id=true" >> $GITHUB_OUTPUT
