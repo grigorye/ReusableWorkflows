@@ -28,12 +28,31 @@ defaults:
     shell: bash --noprofile --norc -x -euo pipefail {0}
 
 jobs:
+  labels:
+    name: Extend Runner Labels
+    runs-on: [ubuntu-22.04]
+    outputs:
+      snapshot-tests: ${{ steps.extend.outputs.snapshot-tests }}
+      unit-tests: ${{ steps.extend.outputs.unit-tests }}
+      ui-snapshot-tests: ${{ steps.extend.outputs.ui-snapshot-tests }}
+    steps:
+      - name: Extend runs-on
+        id: extend
+        run: |
+          snapshot_tests=$(echo '${{ inputs.runs-on }}' | jq -rc '. + ["snapshots"]')
+          echo "snapshot-tests=$snapshot_tests" >> $GITHUB_OUTPUT
+          unit_tests=$(echo '${{ inputs.runs-on }}' | jq -rc '. + ["build"]')
+          echo "unit-tests=$unit_tests" >> $GITHUB_OUTPUT
+          ui_snapshot_tests=$(echo '${{ inputs.runs-on }}' | jq -rc '. + ["ui-automation"]')
+          echo "ui-snapshot-tests=$ui_snapshot_tests" >> $GITHUB_OUTPUT
+
   unit-tests:
     name: 'Unit Tests'
     uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v23
+    needs: [labels]
     secrets: inherit
     with:
-      runs-on: "['${{ inputs.runs-on }}', 'build']"
+      runs-on: '${{ needs.labels.outputs.unit-tests }}'
       testsScheme: ${{ inputs.unit-tests-scheme }}
       testsKind: 'UnitTests'
       testsName: 'Unit Tests'
@@ -41,22 +60,24 @@ jobs:
 
   snapshot-tests:
     name: 'Snapshots'
+    needs: [labels]
     if: inputs.snapshot-tests-scheme != ''
     uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v23
     secrets: inherit
     with:
-      runs-on: "['${{ inputs.runs-on }}', 'snapshots']"
+      runs-on: '${{ needs.labels.outputs.snapshot-tests }}'
       testsScheme: ${{ inputs.snapshot-tests-scheme }}
       testsKind: 'Snapshots'
       testsName: 'Snapshots'
 
   ui-snapshot-tests:
     name: 'UI Test Snapshots'
+    needs: [labels]
     if: inputs.ui-snapshot-tests-scheme != ''
     uses: grigorye/ReusableWorkflows/.github/workflows/tests-reusable.yml@v23
     secrets: inherit
     with:
-      runs-on: "['${{ inputs.runs-on }}', 'ui-automation']"
+      runs-on: '${{ needs.labels.outputs.ui-snapshot-tests }}'
       testsScheme: ${{ inputs.ui-snapshot-tests-scheme }}
       testsKind: 'Snapshots'
       testsName: 'UI Snapshots'
