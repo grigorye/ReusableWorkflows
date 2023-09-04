@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   versioning:
-    uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v23
+    uses: grigorye/ReusableWorkflows/.github/workflows/generate-versions.yml@v24
 
   env:
     name: "Prepare"
@@ -56,7 +56,7 @@ jobs:
           - os: ${{ needs.env.outputs.__MACOS_OS }}
             xcode_version: ${{ needs.env.outputs.__XCODE_VERSION }}
             swift_flags: ${{ needs.env.outputs.__MACOS_SWIFT_FLAGS }}
-    uses: grigorye/ReusableWorkflows/.github/workflows/build-spm-tool-reusable.yml@v23
+    uses: grigorye/ReusableWorkflows/.github/workflows/build-spm-tool-reusable.yml@v24
     with:
       bundle_version: ${{ needs.versioning.outputs.bundle_version }}
       os: ${{ matrix.os }}
