@@ -75,6 +75,10 @@ defaults:
 env:
   XCPRETTY_ENABLED: NO
 
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout@v2
+   
 jobs:
   build:
     name: Build for ${{ inputs.jobName }}
@@ -122,10 +126,20 @@ jobs:
           ./GHAShortcuts/InstallDependencies
           ./GHAShortcuts/InstallDependencies-build-app
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.GH_S3_CACHE_ROLE_TO_ASSUME }}
+          aws-region: eu-west-2
+
       - name: Cache Mint packages
         id: mint-cache
-        uses: actions/cache@v3
+        uses: tespkg/actions-cache@v1
         with:
+          accessKey: ${{ env.AWS_ACCESS_KEY_ID }}
+          secretKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          sessionToken: ${{ env.AWS_SESSION_TOKEN }}
+          bucket: ${{ secrets.GH_S3_CACHE_BUCKET }}
           path: ~/.mint
           key: ${{ runner.os }}-${{ runner.temp }}-mint-${{ hashFiles('**/Mintfile') }}
           restore-keys: ${{ runner.os }}-${{ runner.temp }}-mint-
